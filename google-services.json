@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "778725268360",
+    "project_id": "medioambiente-c564b",
+    "storage_bucket": "medioambiente-c564b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:778725268360:android:46d93bd9433c49e3d5783d",
+        "android_client_info": {
+          "package_name": "com.example.elibcli.proyectoambientales"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "778725268360-ckah2v8e36rcevff5hmtamn06m573hrr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.elibcli.proyectoambientales",
+            "certificate_hash": "4ec8352170c5563c6de11b0f5ddb9a7b1cb62b4a"
+          }
+        },
+        {
+          "client_id": "778725268360-dhee8g97n0isa4pkupasfpnht1sctu35.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAh5Fku7rF3IZ6aMtUSqLCu1L3GVAuWGVE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "778725268360-dhee8g97n0isa4pkupasfpnht1sctu35.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
