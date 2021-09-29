@@ -5,19 +5,27 @@ package com.example.elibcli.proyectoambientales.data.model;
  */
 public class LoggedInUser {
 
-    private String userId;
-    private String displayName;
+    private String usuarioId;
+    private String nombre;
+    private String correo;
 
-    public LoggedInUser(String userId, String displayName) {
-        this.userId = userId;
-        this.displayName = displayName;
+    public LoggedInUser(String usuarioId, String displayName, String mail) {
+        this.usuarioId = usuarioId;
+        this.nombre = displayName;
+        this.correo = mail;
     }
 
     public String getUserId() {
-        return userId;
+        return usuarioId;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getNombre() {
+        return nombre;
     }
+
+    public String getCorreo() {
+        return correo;
+    }
+
+
 }
