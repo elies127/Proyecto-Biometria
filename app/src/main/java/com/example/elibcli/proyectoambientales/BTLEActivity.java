@@ -107,19 +107,44 @@ public class BTLEActivity extends AppCompatActivity {
 
         Log.d(ETIQUETA_LOG, " bytes = " + new String(bytes));
         Log.d(ETIQUETA_LOG, " bytes (" + bytes.length + ") = " + Utilidades.bytesToHexString(bytes));
+
+        //Mostrar datos en el TextView de la app
         TextView beaconslist = findViewById(R.id.beacons);
         EditText filtro = findViewById(R.id.filtroBeacon);
 
         TramaIBeacon tib = new TramaIBeacon(bytes);
-        if(Utilidades.bytesToHexString(tib.getMajor()).equals(filtro.getEditableText())){
+
+        if(filtro.getText().length() == 0){
+
             beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
                     + "-----------" + System.getProperty("line.separator")
-                    + "Nombre: " +  Utilidades.bytesToHexString(tib.getPrefijo())
-                    + "  |  uuid:" + Utilidades.bytesToHexString(tib.getUUID()));
+                    + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                    + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
+            + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+
+        } else {
+
+            if(Utilidades.bytesToInt(tib.getMajor()) == Integer.parseInt(filtro.getText().toString())){
+                beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
+                        + "-----------" + System.getProperty("line.separator")
+                        + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                        + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
+                + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+                Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
+                return;
+            } else {
+
+                beaconslist.setText("No se ha encontrado ningún beacon con el valor Major del filtro <<" + Integer.parseInt(filtro.getText().toString()) + ">> - Último beacon encontrado:" + System.getProperty("line.separator")
+                        + "-----------" + System.getProperty("line.separator")
+                        + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                        + "  |  uuid: " + Utilidades.bytesToString(tib.getUUID())
+                        + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+            }
         }
 
+
         Log.d(ETIQUETA_LOG, " ----------------------------------------------------");
-        Log.d(ETIQUETA_LOG, "Beacon mostrado en la App mediante el filtro: " + filtro.getEditableText());
+        Log.d(ETIQUETA_LOG, "Beacon mostrado en la App mediante el filtro: " + filtro.getEditableText() + " | Valor major obtenido: " + Utilidades.bytesToInt(tib.getMajor()));
         Log.d(ETIQUETA_LOG, " prefijo  = " + Utilidades.bytesToHexString(tib.getPrefijo()));
         Log.d(ETIQUETA_LOG, "          advFlags = " + Utilidades.bytesToHexString(tib.getAdvFlags()));
         Log.d(ETIQUETA_LOG, "          advHeader = " + Utilidades.bytesToHexString(tib.getAdvHeader()));
