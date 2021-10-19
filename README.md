@@ -1,7 +1,4 @@
 # proyectoambientales
 Sprint 0.
 
-
-DevSprint 0
-
-Desarrollo del Sprint0 para finalmente hacer un merge a Master.
+Rama master. Pull request y merge exitoso desde la rama Dev Sprint0.
