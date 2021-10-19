@@ -1,11 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".BTLEActivity">
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="320dp"
+        app:layout_constraintTop_toBottomOf="@+id/borrarBusqueda">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/beacons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aquí aparecerán los beacons..." />
+        </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/botonBuscarDispositivosBTLE"
@@ -13,15 +33,18 @@
         android:layout_height="wrap_content"
         android:onClick="botonBuscarDispositivosBTLEPulsado"
         android:text="Buscar Dispositivos BTLE nou 4"
+        app:icon="@android:drawable/ic_popup_sync"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/botonDetenerBusquedaDispositivosBTLE"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
         android:onClick="botonDetenerBusquedaDispositivosBTLEPulsado"
         android:text="Detener búsaqueda Dispositivos BTLE"
+        app:icon="@android:drawable/ic_media_pause"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="MissingConstraints" />
 
@@ -32,6 +55,31 @@
         android:layout_marginTop="128dp"
         android:onClick="botonBuscarNuestroDispositivoBTLEPulsado"
         android:text="Buscar nuestro dispositivo  BTLE"
+        app:icon="@android:drawable/ic_menu_search"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/borrarBusqueda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:onClick="borrarTextViewBusqueda"
+        android:text="Borrar búsqueda"
+        app:icon="@android:drawable/ic_menu_delete"
+        app:layout_constraintTop_toBottomOf="@+id/botonBuscarNuestroDispositivoBTLE"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <EditText
+        android:id="@+id/filtroBeacon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="38dp"
+        android:ems="10"
+        android:hint="Valor major "
+        android:inputType="number"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/borrarBusqueda"
+        app:layout_constraintTop_toBottomOf="@+id/botonBuscarNuestroDispositivoBTLE" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

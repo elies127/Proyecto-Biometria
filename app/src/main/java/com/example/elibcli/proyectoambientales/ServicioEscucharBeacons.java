@@ -6,9 +6,13 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
+import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,8 +31,9 @@ public class ServicioEscucharBeacons extends IntentService {
     // ---------------------------------------------------------------------------------------------
     private static final String ETIQUETA_LOG = ">>>>";
     private FirebaseDatabase mDatabase;
-    private long tiempoDeEspera = 10000;
+    private long tiempoDeEspera = 1000;
 
+    private String currentUserID;
     private boolean seguir = true;
 
     // ---------------------------------------------------------------------------------------------
@@ -109,38 +114,15 @@ public class ServicioEscucharBeacons extends IntentService {
 
             while ( this.seguir ) {
                 Thread.sleep(tiempoDeEspera);
-                Random rand = new Random();
-                //Generamos numeros aleatorios cada tiempoDeEspera. CAMBIAR por datos REALES del SENSOR
-                HashMap<String, Object> docData = new HashMap<>();
-                docData.put("Valor", rand.nextFloat());
-                docData.put("Momento", new Timestamp(new Date()));
-                mDatabase.getReference().child("/valor/").setValue(rand.nextFloat()*100);
 
-               /* Map<String, Object> nestedData = new HashMap<>();
-                nestedData.put("a", 5);
-                nestedData.put("b", true);
+                FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
+                if(usuario != null) {
+                    LoggedInUser usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail());
+                    FirebaseLogicaNegocio logica = new FirebaseLogicaNegocio();
 
-                docData.put("objectExample", nestedData);
+                    logica.guardarMediciones(usuarioLogged); //Do what you need to do with the id
+                }
 
-                */
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-
-
-                db.collection("sensor").document("datos")
-                        .set(docData)
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Log.d("Firebase", "Datos enviados con exito");
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.w("Firebase", "Error writing document", e);
-                            }
-                        });
 
 
                 Log.d(ETIQUETA_LOG, " ServicioEscucharBeacons.onHandleIntent: tras la espera:  " + contador );

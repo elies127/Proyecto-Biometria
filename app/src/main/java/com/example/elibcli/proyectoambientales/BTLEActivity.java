@@ -11,16 +11,20 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.ParcelUuid;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.textfield.TextInputEditText;
+
+import org.w3c.dom.Text;
+
 import java.util.List;
-import java.util.UUID;
 
 // ------------------------------------------------------------------
 // ------------------------------------------------------------------
@@ -29,7 +33,7 @@ public class BTLEActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    private static final String ETIQUETA_LOG = ">>>>";
+    private static final String ETIQUETA_LOG = "BTLE Beacons >>";
 
     private static final int CODIGO_PETICION_PERMISOS = 11223344;
 
@@ -38,6 +42,7 @@ public class BTLEActivity extends AppCompatActivity {
     private BluetoothLeScanner elEscanner;
 
     private ScanCallback callbackDelEscaneo = null;
+    private String nuestroBeacon; //Valor major de nuestro beacon para identificarlo
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -48,11 +53,11 @@ public class BTLEActivity extends AppCompatActivity {
 
         this.callbackDelEscaneo = new ScanCallback() {
             @Override
-            public void onScanResult( int callbackType, ScanResult resultado ) {
+            public void onScanResult(int callbackType, ScanResult resultado) {
                 super.onScanResult(callbackType, resultado);
                 Log.d(ETIQUETA_LOG, " buscarTodosLosDispositivosBTL(): onScanResult() ");
 
-                mostrarInformacionDispositivoBTLE( resultado );
+                mostrarInformacionDispositivoBTLE(resultado);
             }
 
             @Override
@@ -72,13 +77,13 @@ public class BTLEActivity extends AppCompatActivity {
 
         Log.d(ETIQUETA_LOG, " buscarTodosLosDispositivosBTL(): empezamos a escanear ");
 
-        this.elEscanner.startScan( this.callbackDelEscaneo);
+        this.elEscanner.startScan(this.callbackDelEscaneo);
 
     } // ()
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    private void mostrarInformacionDispositivoBTLE( ScanResult resultado ) {
+    private void mostrarInformacionDispositivoBTLE(ScanResult resultado) {
 
         BluetoothDevice bluetoothDevice = resultado.getDevice();
         byte[] bytes = resultado.getScanRecord().getBytes();
@@ -98,14 +103,48 @@ public class BTLEActivity extends AppCompatActivity {
         }*/
 
         Log.d(ETIQUETA_LOG, " dirección = " + bluetoothDevice.getAddress());
-        Log.d(ETIQUETA_LOG, " rssi = " + rssi );
+        Log.d(ETIQUETA_LOG, " rssi = " + rssi);
 
         Log.d(ETIQUETA_LOG, " bytes = " + new String(bytes));
         Log.d(ETIQUETA_LOG, " bytes (" + bytes.length + ") = " + Utilidades.bytesToHexString(bytes));
 
+        //Mostrar datos en el TextView de la app
+        TextView beaconslist = findViewById(R.id.beacons);
+        EditText filtro = findViewById(R.id.filtroBeacon);
+
         TramaIBeacon tib = new TramaIBeacon(bytes);
 
+        if(filtro.getText().length() == 0){
+
+            beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
+                    + "-----------" + System.getProperty("line.separator")
+                    + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                    + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
+            + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+
+        } else {
+
+            if(Utilidades.bytesToInt(tib.getMajor()) == Integer.parseInt(filtro.getText().toString())){
+                beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
+                        + "-----------" + System.getProperty("line.separator")
+                        + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                        + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
+                + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+                Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
+                return;
+            } else {
+
+                beaconslist.setText("No se ha encontrado ningún beacon con el valor Major del filtro <<" + Integer.parseInt(filtro.getText().toString()) + ">> - Último beacon encontrado:" + System.getProperty("line.separator")
+                        + "-----------" + System.getProperty("line.separator")
+                        + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                        + "  |  uuid: " + Utilidades.bytesToString(tib.getUUID())
+                        + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+            }
+        }
+
+
         Log.d(ETIQUETA_LOG, " ----------------------------------------------------");
+        Log.d(ETIQUETA_LOG, "Beacon mostrado en la App mediante el filtro: " + filtro.getEditableText() + " | Valor major obtenido: " + Utilidades.bytesToInt(tib.getMajor()));
         Log.d(ETIQUETA_LOG, " prefijo  = " + Utilidades.bytesToHexString(tib.getPrefijo()));
         Log.d(ETIQUETA_LOG, "          advFlags = " + Utilidades.bytesToHexString(tib.getAdvFlags()));
         Log.d(ETIQUETA_LOG, "          advHeader = " + Utilidades.bytesToHexString(tib.getAdvHeader()));
@@ -126,7 +165,7 @@ public class BTLEActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    private void buscarEsteDispositivoBTLE(final String dispositivoBuscado ) {
+    private void buscarEsteDispositivoBTLE(final String dispositivoBuscado) {
         Log.d(ETIQUETA_LOG, " buscarEsteDispositivoBTLE(): empieza ");
 
         Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): instalamos scan callback ");
@@ -136,11 +175,11 @@ public class BTLEActivity extends AppCompatActivity {
 
         this.callbackDelEscaneo = new ScanCallback() {
             @Override
-            public void onScanResult( int callbackType, ScanResult resultado ) {
+            public void onScanResult(int callbackType, ScanResult resultado) {
                 super.onScanResult(callbackType, resultado);
-                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onScanResult() ");
+                Log.d(ETIQUETA_LOG, " -- Resultado de buscarEsteDispositivoBTLE(): onScanResult() ");
 
-                mostrarInformacionDispositivoBTLE( resultado );
+                mostrarInformacionDispositivoBTLE(resultado);
             }
 
             @Override
@@ -158,53 +197,56 @@ public class BTLEActivity extends AppCompatActivity {
             }
         };
 
-        ScanFilter sf = new ScanFilter.Builder().setDeviceName( dispositivoBuscado ).build();
+        ScanFilter sf = new ScanFilter.Builder().setDeviceName(dispositivoBuscado).build();
 
-        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado );
+        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado);
         //Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado
         //      + " -> " + Utilidades.stringToUUID( dispositivoBuscado ) );
 
-        this.elEscanner.startScan( this.callbackDelEscaneo );
+        this.elEscanner.startScan(this.callbackDelEscaneo);
     } // ()
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private void detenerBusquedaDispositivosBTLE() {
 
-        if ( this.callbackDelEscaneo == null ) {
+        if (this.callbackDelEscaneo == null) {
             return;
         }
 
-        this.elEscanner.stopScan( this.callbackDelEscaneo );
+        this.elEscanner.stopScan(this.callbackDelEscaneo);
         this.callbackDelEscaneo = null;
 
     } // ()
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    public void botonBuscarDispositivosBTLEPulsado( View v ) {
-        Log.d(ETIQUETA_LOG, " boton buscar dispositivos BTLE Pulsado" );
+    public void botonBuscarDispositivosBTLEPulsado(View v) {
+        Log.d(ETIQUETA_LOG, " boton buscar dispositivos BTLE Pulsado");
         this.buscarTodosLosDispositivosBTLE();
     } // ()
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    public void botonBuscarNuestroDispositivoBTLEPulsado( View v ) {
-        Log.d(ETIQUETA_LOG, " boton nuestro dispositivo BTLE Pulsado" );
+    public void botonBuscarNuestroDispositivoBTLEPulsado(View v) {
+        Log.d(ETIQUETA_LOG, " boton nuestro dispositivo BTLE Pulsado");
         //this.buscarEsteDispositivoBTLE( Utilidades.stringToUUID( "EPSG-GTI-PROY-3A" ) );
 
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
-        this.buscarEsteDispositivoBTLE( "fistro" );
+        this.buscarEsteDispositivoBTLE("Demo beacon");
 
     } // ()
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    public void botonDetenerBusquedaDispositivosBTLEPulsado( View v ) {
-        Log.d(ETIQUETA_LOG, " boton detener busqueda dispositivos BTLE Pulsado" );
+    public void botonDetenerBusquedaDispositivosBTLEPulsado(View v) {
+        Log.d(ETIQUETA_LOG, " boton detener busqueda dispositivos BTLE Pulsado");
         this.detenerBusquedaDispositivosBTLE();
     } // ()
-
+    public void borrarTextViewBusqueda(View v) {
+        TextView a = findViewById(R.id.beacons);
+        a.setText("Búsqueda borrada...");
+    } // ()
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private void inicializarBlueTooth() {
@@ -216,15 +258,15 @@ public class BTLEActivity extends AppCompatActivity {
 
         bta.enable();
 
-        Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): habilitado =  " + bta.isEnabled() );
+        Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): habilitado =  " + bta.isEnabled());
 
-        Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): estado =  " + bta.getState() );
+        Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): estado =  " + bta.getState());
 
         Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): obtenemos escaner btle ");
 
         this.elEscanner = bta.getBluetoothLeScanner();
 
-        if ( this.elEscanner == null ) {
+        if (this.elEscanner == null) {
             Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): Socorro: NO hemos obtenido escaner btle  !!!!");
 
         }
@@ -235,14 +277,12 @@ public class BTLEActivity extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
                         || ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED
                         || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-        )
-        {
+        ) {
             ActivityCompat.requestPermissions(
                     BTLEActivity.this,
                     new String[]{Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.ACCESS_FINE_LOCATION},
                     CODIGO_PETICION_PERMISOS);
-        }
-        else {
+        } else {
             Log.d(ETIQUETA_LOG, " inicializarBlueTooth(): parece que YA tengo los permisos necesarios !!!!");
 
         }
@@ -268,7 +308,7 @@ public class BTLEActivity extends AppCompatActivity {
     // --------------------------------------------------------------
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
-        super.onRequestPermissionsResult( requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         switch (requestCode) {
             case CODIGO_PETICION_PERMISOS:
@@ -279,7 +319,7 @@ public class BTLEActivity extends AppCompatActivity {
                     Log.d(ETIQUETA_LOG, " onRequestPermissionResult(): permisos concedidos  !!!!");
                     // Permission is granted. Continue the action or workflow
                     // in your app.
-                }  else {
+                } else {
 
                     Log.d(ETIQUETA_LOG, " onRequestPermissionResult(): Socorro: permisos NO concedidos  !!!!");
 

@@ -26,11 +26,12 @@ import com.github.johnpersano.supertoasts.library.SuperToast;
 import com.github.johnpersano.supertoasts.library.utils.PaletteUtils;
 
 public class HomeFragment extends Fragment {
-   //Home principal. Ejecutado por default por main activity.
+    //Home principal. Ejecutado por default por main activity.
     private HomeViewModel homeViewModel;
     private static final String ETIQUETA_LOG = "DATOS ----";
     private SuperActivityToast superActivityToast;
     private Intent elIntentDelServicio = null;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         homeViewModel =
@@ -56,10 +57,11 @@ public class HomeFragment extends Fragment {
         //--
         return root;
     }
+
     private View.OnClickListener mButtonClickListener = v -> botonArrancarServicioPulsado();
 
     private View.OnClickListener mButtonClickListenerDetener = v -> botonDetenerServicioPulsado();
-    private View.OnClickListener mButtonClickListenerAjustes = v -> iniciarAjustesBTL ();
+    private View.OnClickListener mButtonClickListenerAjustes = v -> iniciarAjustesBTL();
 
     private void iniciarAjustesBTL() {
 
@@ -67,9 +69,9 @@ public class HomeFragment extends Fragment {
     }
 
     public void botonArrancarServicioPulsado() {
-        Log.d(ETIQUETA_LOG, " boton arrancar servicio Pulsado" );
+        Log.d(ETIQUETA_LOG, " boton arrancar servicio Pulsado");
 
-        if ( this.elIntentDelServicio != null ) {
+        if (this.elIntentDelServicio != null) {
             // ya estaba arrancado
             return;
         }
@@ -79,14 +81,14 @@ public class HomeFragment extends Fragment {
         this.elIntentDelServicio = new Intent(getContext(), ServicioEscucharBeacons.class);
 
         this.elIntentDelServicio.putExtra("tiempoDeEspera", (long) 5000);
-        getActivity().startService( this.elIntentDelServicio );
+        getActivity().startService(this.elIntentDelServicio);
 
         //Toast message para representar feedback -- El servicio se ha ejecutado
         superActivityToast.setText("Escuchando beacons...");
         superActivityToast.setDuration(Style.DURATION_LONG);
         superActivityToast.setColor(1);
         superActivityToast.setTextColor(Color.WHITE);
-       // superActivityToast.setTouchToDismiss(true);
+        // superActivityToast.setTouchToDismiss(true);
         superActivityToast.show();
         superActivityToast.setIndeterminate(false);
 
@@ -97,16 +99,16 @@ public class HomeFragment extends Fragment {
     // ---------------------------------------------------------------------------------------------
     public void botonDetenerServicioPulsado() {
 
-        if ( this.elIntentDelServicio == null ) {
+        if (this.elIntentDelServicio == null) {
             // no estaba arrancado
             return;
         }
 
-        getActivity().stopService( this.elIntentDelServicio );
+        getActivity().stopService(this.elIntentDelServicio);
 
         this.elIntentDelServicio = null;
 
-        Log.d(ETIQUETA_LOG, " boton detener servicio Pulsado" );
+        Log.d(ETIQUETA_LOG, " boton detener servicio Pulsado");
         superActivityToast.setProgress(10);
         superActivityToast.setProgressIndeterminate(false);
 
