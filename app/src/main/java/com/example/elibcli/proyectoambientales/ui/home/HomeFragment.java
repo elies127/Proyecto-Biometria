@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -20,6 +21,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.elibcli.proyectoambientales.BTLEActivity;
 import com.example.elibcli.proyectoambientales.R;
 import com.example.elibcli.proyectoambientales.ServicioEscucharBeacons;
+import com.example.elibcli.proyectoambientales.services.SegundoPlanoLecturaSensor;
 import com.github.johnpersano.supertoasts.library.Style;
 import com.github.johnpersano.supertoasts.library.SuperActivityToast;
 import com.github.johnpersano.supertoasts.library.SuperToast;
@@ -75,14 +77,16 @@ public class HomeFragment extends Fragment {
             // ya estaba arrancado
             return;
         }
-
+/*
         Log.d(ETIQUETA_LOG, " MainActivity.constructor : voy a arrancar el servicio");
 
         this.elIntentDelServicio = new Intent(getContext(), ServicioEscucharBeacons.class);
 
         this.elIntentDelServicio.putExtra("tiempoDeEspera", (long) 5000);
         getActivity().startService(this.elIntentDelServicio);
+*/
 
+        startService();
         //Toast message para representar feedback -- El servicio se ha ejecutado
         superActivityToast.setText("Escuchando beacons...");
         superActivityToast.setDuration(Style.DURATION_LONG);
@@ -113,7 +117,11 @@ public class HomeFragment extends Fragment {
         superActivityToast.setProgressIndeterminate(false);
 
     } // ()
-
+    public void startService() {
+        Intent serviceIntent = new Intent(getActivity(), SegundoPlanoLecturaSensor.class);
+        serviceIntent.putExtra("inputExtra", "¡Gracias por ayudar a combatir el cambio climático!");
+        ContextCompat.startForegroundService(getContext(), serviceIntent);
+    }
     // ---------------------------------------------------------------------------------------------
     // ---
 }

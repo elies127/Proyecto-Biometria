@@ -1,10 +1,14 @@
 package com.example.elibcli.proyectoambientales;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
 
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
@@ -30,11 +34,13 @@ public class ServicioEscucharBeacons extends IntentService {
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     private static final String ETIQUETA_LOG = ">>>>";
+    private static final int NOTIFICATION_ID = 1;
     private FirebaseDatabase mDatabase;
     private long tiempoDeEspera = 1000;
 
     private String currentUserID;
     private boolean seguir = true;
+    private NotificationManager mNotificationManager;
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
@@ -80,7 +86,22 @@ public class ServicioEscucharBeacons extends IntentService {
         Log.d(ETIQUETA_LOG, " ServicioEscucharBeacons.parar() : acaba " );
 
     }
+    private void sendNotification(String msg) {
+        mNotificationManager = (NotificationManager)
+                this.getSystemService(Context.NOTIFICATION_SERVICE);
 
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                new Intent(this, MainActivity.class), 0);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "1")
+                .setSmallIcon(R.drawable.ic_menu_slideshow)
+                .setContentTitle("My notification")
+                .setContentText("Much longer text that cannot fit one line...")
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText("Much longer text that cannot fit one line..."))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+    }
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     public void onDestroy() {
@@ -109,7 +130,7 @@ public class ServicioEscucharBeacons extends IntentService {
         long contador = 1;
 
         Log.d(ETIQUETA_LOG, " ServicioEscucharBeacons.onHandleIntent: empieza : thread=" + Thread.currentThread().getId() );
-
+       sendNotification("Servicio ejecutado con éxito");
         try {
 
             while ( this.seguir ) {
@@ -119,8 +140,8 @@ public class ServicioEscucharBeacons extends IntentService {
                 if(usuario != null) {
                     LoggedInUser usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail());
                     FirebaseLogicaNegocio logica = new FirebaseLogicaNegocio();
-
-                    logica.guardarMediciones(usuarioLogged); //Do what you need to do with the id
+                    Random rand = new Random();
+                    logica.guardarMediciones(rand.nextFloat()*100, usuarioLogged); //Do what you need to do with the id
                 }
 
 

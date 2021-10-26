@@ -28,11 +28,18 @@ public class FirebaseLogicaNegocio {
     private FirebaseDatabase mDatabase; //Real time database - Menor cantidad de datos a tiempo real.
     private FirebaseFirestore db = FirebaseFirestore.getInstance(); //Firestore database - Más lenta, mayor cantidad de datos
 
-    public void guardarMediciones(LoggedInUser usuario){
-        Random rand = new Random();
+    /*
+     Diseño lógico:
+        [Medicion] -> guardarMediciones()
+
+        @param usuario
+
+     */
+    public void guardarMediciones(float datos, LoggedInUser usuario){
+
         //Generamos numeros aleatorios cada tiempoDeEspera. CAMBIAR por datos REALES del SENSOR
         HashMap<String, Object> docData = new HashMap<>();
-        docData.put("valor", rand.nextFloat()*100);
+        docData.put("valor", datos);
         docData.put("momento", new Timestamp(new Date()).toDate());
         docData.put("usuario", usuario);
         mDatabase = FirebaseDatabase.getInstance("https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app");

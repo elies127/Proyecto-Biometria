@@ -40,6 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="128dp"
         android:text="Ajustes de Bluetooth (BTLE)"
+        android:visibility="invisible"
         app:layout_constraintTop_toTopOf="parent" />
 
 

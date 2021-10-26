@@ -3,23 +3,29 @@ package com.example.elibcli.proyectoambientales;
 // ------------------------------------------------------------------
 
 import android.Manifest;
+import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.elibcli.proyectoambientales.services.SegundoPlanoLecturaSensor;
 import com.google.android.material.textfield.TextInputEditText;
 
 import org.w3c.dom.Text;
@@ -80,6 +86,30 @@ public class BTLEActivity extends AppCompatActivity {
         this.elEscanner.startScan(this.callbackDelEscaneo);
 
     } // ()
+public void mostrarDialogo(){
+
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+// 2. Chain together various setter methods to set the dialog characteristics
+    builder.setMessage("¿Quieres empezar a recopilar información del sensor?")
+            .setTitle("Dispositivo encontrado");
+    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+            Intent serviceIntent = new Intent(getApplicationContext(), SegundoPlanoLecturaSensor.class);
+            serviceIntent.putExtra("inputExtra", "¡Gracias por ayudar a combatir el cambio climático!");
+            ContextCompat.startForegroundService(getApplicationContext(), serviceIntent);
+        }
+    });
+    builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+            // User cancelled the dialog
+        }
+    });
+// 3. Get the <code><a href="/reference/android/app/AlertDialog.html">AlertDialog</a></code> from <code><a href="/reference/android/app/AlertDialog.Builder.html#create()">create()</a></code>
+    AlertDialog dialog = builder.create();
+    dialog.show();
+}
+
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -118,33 +148,42 @@ public class BTLEActivity extends AppCompatActivity {
 
             beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
                     + "-----------" + System.getProperty("line.separator")
-                    + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
+                    + "Nombre: " +  bluetoothDevice.getName()
                     + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
             + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
 
         } else {
+            String logfiltro = filtro.getText().toString() + " || " + bluetoothDevice.getName();
+            Log.d("-------", logfiltro);
+            if(bluetoothDevice.getName() != null){
+                if(bluetoothDevice.getName().equals(filtro.getText().toString())){
+                    beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
+                            + "-----------" + System.getProperty("line.separator")
+                            + "Nombre: " +  bluetoothDevice.getName()
+                            + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
+                            + " | Major: " + Utilidades.bytesToInt(tib.getMajor())
+                            + " | Minor: " + Utilidades.bytesToInt(tib.getMinor()));
+                    Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
+                    Toast.makeText(getApplicationContext(), "¡He encontrado el dispositivo filtrado: " + bluetoothDevice.getName(), Toast.LENGTH_SHORT ).show();
+                    mostrarDialogo();
+                    detenerBusquedaDispositivosBTLE();
+                    return;
+                } else {
 
-            if(Utilidades.bytesToInt(tib.getMajor()) == Integer.parseInt(filtro.getText().toString())){
-                beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
-                        + "-----------" + System.getProperty("line.separator")
-                        + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
-                        + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
-                + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
-                Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
-                return;
-            } else {
+                    beaconslist.setText("No se ha encontrado ningún beacon con el valor prefijo del filtro <<" + filtro.getText() + " Valores detectados: " + bluetoothDevice.getName() + " || >> - Último beacon encontrado:" + System.getProperty("line.separator")
+                            + "-----------" + System.getProperty("line.separator")
+                            + "Nombre: " +  bluetoothDevice.getName()
+                            + "  |  uuid: " + Utilidades.bytesToString(tib.getUUID())
+                            + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+                }
 
-                beaconslist.setText("No se ha encontrado ningún beacon con el valor Major del filtro <<" + Integer.parseInt(filtro.getText().toString()) + ">> - Último beacon encontrado:" + System.getProperty("line.separator")
-                        + "-----------" + System.getProperty("line.separator")
-                        + "Nombre: " +  Utilidades.bytesToString(tib.getPrefijo())
-                        + "  |  uuid: " + Utilidades.bytesToString(tib.getUUID())
-                        + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
             }
+
         }
 
 
         Log.d(ETIQUETA_LOG, " ----------------------------------------------------");
-        Log.d(ETIQUETA_LOG, "Beacon mostrado en la App mediante el filtro: " + filtro.getEditableText() + " | Valor major obtenido: " + Utilidades.bytesToInt(tib.getMajor()));
+        Log.d(ETIQUETA_LOG, "Beacon mostrado en la App mediante el filtro: " + filtro.getEditableText() + " | Nombre obtenido: " + bluetoothDevice.getName());
         Log.d(ETIQUETA_LOG, " prefijo  = " + Utilidades.bytesToHexString(tib.getPrefijo()));
         Log.d(ETIQUETA_LOG, "          advFlags = " + Utilidades.bytesToHexString(tib.getAdvFlags()));
         Log.d(ETIQUETA_LOG, "          advHeader = " + Utilidades.bytesToHexString(tib.getAdvHeader()));
@@ -330,6 +369,10 @@ public class BTLEActivity extends AppCompatActivity {
         // permissions this app might request.
     } // ()
 
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
 } // class
 // --------------------------------------------------------------
 // --------------------------------------------------------------

@@ -32,7 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="botonBuscarDispositivosBTLEPulsado"
-        android:text="Buscar Dispositivos BTLE nou 4"
+        android:text="Buscar dispositivos"
         app:icon="@android:drawable/ic_popup_sync"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -42,44 +42,38 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
+        android:layout_marginBottom="32dp"
         android:onClick="botonDetenerBusquedaDispositivosBTLEPulsado"
         android:text="Detener búsaqueda Dispositivos BTLE"
         app:icon="@android:drawable/ic_media_pause"
+        app:layout_constraintBottom_toTopOf="@+id/borrarBusqueda"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="MissingConstraints" />
-
-    <Button
-        android:id="@+id/botonBuscarNuestroDispositivoBTLE"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="128dp"
-        android:onClick="botonBuscarNuestroDispositivoBTLEPulsado"
-        android:text="Buscar nuestro dispositivo  BTLE"
-        app:icon="@android:drawable/ic_menu_search"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintVertical_bias="0.0"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="0dp" />
 
     <Button
         android:id="@+id/borrarBusqueda"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="12dp"
         android:onClick="borrarTextViewBusqueda"
         android:text="Borrar búsqueda"
         app:icon="@android:drawable/ic_menu_delete"
-        app:layout_constraintTop_toBottomOf="@+id/botonBuscarNuestroDispositivoBTLE"
+        app:layout_constraintTop_toBottomOf="@+id/botonDetenerBusquedaDispositivosBTLE"
         tools:layout_editor_absoluteX="0dp" />
 
     <EditText
         android:id="@+id/filtroBeacon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="6dp"
-        android:layout_marginTop="38dp"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="16dp"
         android:ems="10"
-        android:hint="Valor major "
-        android:inputType="number"
+        android:hint="Nombre..."
+        android:inputType="text"
         android:textSize="12sp"
         app:layout_constraintStart_toEndOf="@+id/borrarBusqueda"
-        app:layout_constraintTop_toBottomOf="@+id/botonBuscarNuestroDispositivoBTLE" />
+        app:layout_constraintTop_toBottomOf="@+id/botonDetenerBusquedaDispositivosBTLE" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

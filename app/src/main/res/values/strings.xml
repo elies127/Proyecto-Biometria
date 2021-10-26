@@ -152,4 +152,6 @@
     <string name="configrp_titulo">Inicio automático</string>
     <string name="configrp_summary">Activa el inicio automático de la aplicación, saltándose el modo de configuración del robot. También puede ser usado para cambiar de Red WiFi o cuando hay problemas de sincronización</string>
     <string name="escanear">Pulsa en escanear para comenzar</string>
+    <string name="ok">Vale</string>
+    <string name="cancel">Cancelar</string>
 </resources>
