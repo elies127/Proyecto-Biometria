@@ -35,6 +35,17 @@ public class FirebaseLogicaNegocio {
         @param usuario
 
      */
+
+    public void guardarDispositivo(nodeSensor sensor, LoggedInUser usuario){
+        HashMap<String, Object> docData = new HashMap<>();
+        docData.put(sensor.getUuid(), sensor.toMap());
+        mDatabase = FirebaseDatabase.getInstance("https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app");
+        Log.d("SENSOR", "Intentando guardar dispositivo en Firebase... -> " + sensor.toMap().toString());
+        mDatabase.getReference().child(usuario.getUserId() + "/sensores/").setValue(docData);
+    }
+    public void eliminarDispositivo(String beaconName, LoggedInUser usuario){
+
+    }
     public void guardarMediciones(float datos, LoggedInUser usuario){
 
         //Generamos numeros aleatorios cada tiempoDeEspera. CAMBIAR por datos REALES del SENSOR
@@ -42,6 +53,7 @@ public class FirebaseLogicaNegocio {
         docData.put("valor", datos);
         docData.put("momento", new Timestamp(new Date()).toDate());
         docData.put("usuario", usuario);
+
         mDatabase = FirebaseDatabase.getInstance("https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app");
 
         mDatabase.getReference().child(usuario.getUserId() + "/datos/").setValue(docData);

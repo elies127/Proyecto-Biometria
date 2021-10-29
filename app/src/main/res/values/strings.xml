@@ -154,4 +154,7 @@
     <string name="escanear">Pulsa en escanear para comenzar</string>
     <string name="ok">Vale</string>
     <string name="cancel">Cancelar</string>
+    <string name="link_device">Enlazar dispositivo</string>
+    <string name="new_device_found">¡Nuevo dispositivo encontrado!</string>
+    <string name="noise">Ruido</string>
 </resources>

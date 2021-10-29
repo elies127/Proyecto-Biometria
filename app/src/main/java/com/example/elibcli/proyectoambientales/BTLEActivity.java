@@ -13,9 +13,13 @@ import android.bluetooth.le.ScanResult;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,8 +29,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
+import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
+import com.example.elibcli.proyectoambientales.data.model.nodeSensor;
 import com.example.elibcli.proyectoambientales.services.SegundoPlanoLecturaSensor;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import org.w3c.dom.Text;
 
@@ -40,11 +49,13 @@ public class BTLEActivity extends AppCompatActivity {
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private static final String ETIQUETA_LOG = "BTLE Beacons >>";
-
+    Dialog myDialog;
     private static final int CODIGO_PETICION_PERMISOS = 11223344;
-
+    private nodeSensor dispositivoUsuario;
     // --------------------------------------------------------------
     // --------------------------------------------------------------
+    private LoggedInUser usuarioLogged;
+    private FirebaseLogicaNegocio logica;
     private BluetoothLeScanner elEscanner;
 
     private ScanCallback callbackDelEscaneo = null;
@@ -86,29 +97,7 @@ public class BTLEActivity extends AppCompatActivity {
         this.elEscanner.startScan(this.callbackDelEscaneo);
 
     } // ()
-public void mostrarDialogo(){
 
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-// 2. Chain together various setter methods to set the dialog characteristics
-    builder.setMessage("¿Quieres empezar a recopilar información del sensor?")
-            .setTitle("Dispositivo encontrado");
-    builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int id) {
-            Intent serviceIntent = new Intent(getApplicationContext(), SegundoPlanoLecturaSensor.class);
-            serviceIntent.putExtra("inputExtra", "¡Gracias por ayudar a combatir el cambio climático!");
-            ContextCompat.startForegroundService(getApplicationContext(), serviceIntent);
-        }
-    });
-    builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int id) {
-            // User cancelled the dialog
-        }
-    });
-// 3. Get the <code><a href="/reference/android/app/AlertDialog.html">AlertDialog</a></code> from <code><a href="/reference/android/app/AlertDialog.Builder.html#create()">create()</a></code>
-    AlertDialog dialog = builder.create();
-    dialog.show();
-}
 
 
     // --------------------------------------------------------------
@@ -143,7 +132,9 @@ public void mostrarDialogo(){
         EditText filtro = findViewById(R.id.filtroBeacon);
 
         TramaIBeacon tib = new TramaIBeacon(bytes);
-
+        Log.d(ETIQUETA_LOG, " Major = " + Utilidades.bytesToInt(tib.getMajor()));
+        Log.d(ETIQUETA_LOG, " Minor = " + Utilidades.bytesToInt(tib.getMinor()));
+        Log.d(ETIQUETA_LOG, " ESTABLECIENDO TEXTVIEWS...----------");
         if(filtro.getText().length() == 0){
 
             beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
@@ -156,7 +147,7 @@ public void mostrarDialogo(){
             String logfiltro = filtro.getText().toString() + " || " + bluetoothDevice.getName();
             Log.d("-------", logfiltro);
             if(bluetoothDevice.getName() != null){
-                if(bluetoothDevice.getName().equals(filtro.getText().toString())){
+                if(bluetoothDevice.getName().equals(filtro.getText().toString())){// - DISPOSITIVO ENCONTRADO
                     beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
                             + "-----------" + System.getProperty("line.separator")
                             + "Nombre: " +  bluetoothDevice.getName()
@@ -165,8 +156,19 @@ public void mostrarDialogo(){
                             + " | Minor: " + Utilidades.bytesToInt(tib.getMinor()));
                     Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
                     Toast.makeText(getApplicationContext(), "¡He encontrado el dispositivo filtrado: " + bluetoothDevice.getName(), Toast.LENGTH_SHORT ).show();
-                    mostrarDialogo();
+
+
                     detenerBusquedaDispositivosBTLE();
+
+                    dispositivoUsuario = new nodeSensor(rssi, Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), bluetoothDevice.getName(),Utilidades.bytesToString(tib.getUUID()) );
+
+                    ShowPopup();
+
+                    Log.d("SENSOR", "Dispositivo a almacenar: "+ " -- "+ dispositivoUsuario.toMap().toString());
+
+
+
+
                     return;
                 } else {
 
@@ -245,6 +247,36 @@ public void mostrarDialogo(){
         this.elEscanner.startScan(this.callbackDelEscaneo);
     } // ()
 
+
+
+
+    public void ShowPopup() {
+
+
+        myDialog.setContentView(R.layout.custompopup);
+        TextView txtclose, txtmajor, txtminor, txtnoise, txtname;
+        txtmajor = myDialog.findViewById(R.id.major_value);
+        txtminor = myDialog.findViewById(R.id.minor_value);
+        txtnoise = myDialog.findViewById(R.id.noise_value);
+        txtname = myDialog.findViewById(R.id.name_value);
+
+        txtmajor.setText(String.valueOf(dispositivoUsuario.getMajor()));
+        txtminor.setText(String.valueOf(dispositivoUsuario.getMinor()));
+        txtnoise.setText(String.valueOf(dispositivoUsuario.getNoise()));
+        txtname.setText(dispositivoUsuario.getBeaconName());
+        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        txtclose.setText("M");
+
+        txtclose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myDialog.dismiss();
+            }
+        });
+
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
+    }
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private void detenerBusquedaDispositivosBTLE() {
@@ -334,6 +366,15 @@ public void mostrarDialogo(){
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_btle);
+        myDialog = new Dialog(this);
+        FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
+        if(usuario != null) {
+             usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail());
+             logica = new FirebaseLogicaNegocio();
+
+        } else {
+            Toast.makeText(getApplicationContext(), "¡Ha habido un problema con tu sesión! Puede que no funcione bien el vínculo de dispositivos", Toast.LENGTH_SHORT ).show();
+        }
 
         Log.d(ETIQUETA_LOG, " onCreate(): empieza ");
 
@@ -372,6 +413,13 @@ public void mostrarDialogo(){
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }
+
+    public void btnLink(View view) {
+        logica.guardarDispositivo(dispositivoUsuario,usuarioLogged);
+        Toast.makeText(getApplicationContext(),
+                "Acabas de añadir a la lista de sensores: "+ dispositivoUsuario.getBeaconName() + ". Por tanto... ¡Dispositivo enlazado correctamente!",
+                Toast.LENGTH_LONG ).show();
     }
 } // class
 // --------------------------------------------------------------
