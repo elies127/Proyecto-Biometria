@@ -10,7 +10,12 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthProvider;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Date;
@@ -27,10 +32,10 @@ public class FirebaseLogicaNegocio {
 
     private FirebaseDatabase mDatabase; //Real time database - Menor cantidad de datos a tiempo real.
     private FirebaseFirestore db = FirebaseFirestore.getInstance(); //Firestore database - Más lenta, mayor cantidad de datos
-
+    public static String urlDatabase = "https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app";
     /*
      Diseño lógico:
-        [Medicion] -> guardarMediciones()
+        [Sensor],[usuario] -> guardarDispositivo()
 
         @param usuario
 
@@ -39,13 +44,31 @@ public class FirebaseLogicaNegocio {
     public void guardarDispositivo(nodeSensor sensor, LoggedInUser usuario){
         HashMap<String, Object> docData = new HashMap<>();
         docData.put(sensor.getUuid(), sensor.toMap());
-        mDatabase = FirebaseDatabase.getInstance("https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app");
+        mDatabase = FirebaseDatabase.getInstance(urlDatabase);
         Log.d("SENSOR", "Intentando guardar dispositivo en Firebase... -> " + sensor.toMap().toString());
         mDatabase.getReference().child(usuario.getUserId() + "/sensores/").setValue(docData);
     }
-    public void eliminarDispositivo(String beaconName, LoggedInUser usuario){
+    public void eliminarDispositivo(nodeSensor sensor, LoggedInUser usuario){
+        String child = usuario.getUserId() + "/sensores/" + sensor.getUuid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+        Query applesQuery = ref.child(usuario.getUserId() + "/sensores/").orderByChild(sensor.getUuid()).equalTo(sensor.getUuid());
+        Log.d("SENSOR", "Intentando ELIMINAR dispositivo en Firebase... -> " + sensor.toMap().toString());
+        ref = FirebaseDatabase.getInstance().getReference()
+                .child(child);
+        ref.removeValue();
+        Log.d("SENSOR", "Sensor eliminado de Firebase -> " + sensor.toMap().toString());
 
     }
+
+
+     /*
+     Diseño lógico:
+        [Medicion] -> guardarMediciones()
+
+        @param usuario
+
+     */
+
     public void guardarMediciones(float datos, LoggedInUser usuario){
 
         //Generamos numeros aleatorios cada tiempoDeEspera. CAMBIAR por datos REALES del SENSOR
@@ -54,7 +77,7 @@ public class FirebaseLogicaNegocio {
         docData.put("momento", new Timestamp(new Date()).toDate());
         docData.put("usuario", usuario);
 
-        mDatabase = FirebaseDatabase.getInstance("https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app");
+        mDatabase = FirebaseDatabase.getInstance(urlDatabase);
 
         mDatabase.getReference().child(usuario.getUserId() + "/datos/").setValue(docData);
 

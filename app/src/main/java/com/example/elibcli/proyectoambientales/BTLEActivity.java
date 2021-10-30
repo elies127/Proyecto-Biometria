@@ -160,7 +160,7 @@ public class BTLEActivity extends AppCompatActivity {
 
                     detenerBusquedaDispositivosBTLE();
 
-                    dispositivoUsuario = new nodeSensor(rssi, Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), bluetoothDevice.getName(),Utilidades.bytesToString(tib.getUUID()) );
+                    dispositivoUsuario = new nodeSensor(rssi, Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), bluetoothDevice.getName(),Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
 
                     ShowPopup();
 
