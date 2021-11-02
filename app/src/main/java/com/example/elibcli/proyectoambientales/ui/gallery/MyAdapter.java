@@ -1,7 +1,6 @@
 package com.example.elibcli.proyectoambientales.ui.gallery;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.elibcli.proyectoambientales.R;
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
-import com.example.elibcli.proyectoambientales.data.model.nodeSensor;
+import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -24,10 +23,10 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     Context context;
 
-    ArrayList<nodeSensor> list;
+    ArrayList<Nodo> list;
 
 
-    public MyAdapter(Context context, ArrayList<nodeSensor> list) {
+    public MyAdapter(Context context, ArrayList<Nodo> list) {
         this.context = context;
         this.list = list;
     }
@@ -42,7 +41,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
 
-        nodeSensor node = list.get(position);
+        Nodo node = list.get(position);
         holder.beaconName.setText(node.getBeaconName());
         holder.uuid.setText(node.getUuid());
 
@@ -61,7 +60,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
                     LoggedInUser usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail()); //transformamos los datos de FirebaseAuth a los nuestros
 
-                    logica.eliminarDispositivo(node, usuarioLogged);
+                    logica.desenlazarDispositivos(node, usuarioLogged);
                     list.remove(position);  // remove the item from list
                     notifyItemRemoved(position); // notify the adapter about the removed item
                 }

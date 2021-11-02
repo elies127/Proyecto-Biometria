@@ -11,7 +11,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.logging.LogManager;
 
-public class nodeSensor {
+public class Nodo {
 
 
     private int noise;
@@ -21,11 +21,11 @@ public class nodeSensor {
     private String beaconName;
     private String uuid;
 
-    public nodeSensor(){
+    public Nodo(){
 
 
     }
-    public nodeSensor(int noise, int major, int minor, String beaconName, String uuidIncome, int txPower) {
+    public Nodo(int noise, int major, int minor, String beaconName, String uuidIncome, int txPower) {
         this.noise = noise;
         this.major = major;
         this.minor = minor;
@@ -119,8 +119,15 @@ public class nodeSensor {
             //distance =  (mCoefficient1)*Math.pow(ratio,mCoefficient2) + mCoefficient3;
             distancia =  -1;
         }
-        DecimalFormat df = new DecimalFormat("#.######"); //Cuantos decimales va a tener el ratio de distancia?
-        return Float.parseFloat(df.format(distancia));
+        DecimalFormat df = new DecimalFormat("#.##########"); //Cuantos decimales va a tener el ratio de distancia?
+
+        try{
+            return Float.parseFloat(df.format(distancia));
+        } catch(NumberFormatException ex){ // handle your exception
+            Log.d("DISTANCIA", "Error al parsear el float: " + ex);
+            return -69;
+        }
+
     }
 
     public double getTxPower() {

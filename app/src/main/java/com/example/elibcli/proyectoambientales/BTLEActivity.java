@@ -10,34 +10,25 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
-import com.example.elibcli.proyectoambientales.data.model.nodeSensor;
-import com.example.elibcli.proyectoambientales.services.SegundoPlanoLecturaSensor;
-import com.google.android.material.textfield.TextInputEditText;
+import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -51,7 +42,7 @@ public class BTLEActivity extends AppCompatActivity {
     private static final String ETIQUETA_LOG = "BTLE Beacons >>";
     Dialog myDialog;
     private static final int CODIGO_PETICION_PERMISOS = 11223344;
-    private nodeSensor dispositivoUsuario;
+    private Nodo dispositivoUsuario;
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private LoggedInUser usuarioLogged;
@@ -160,7 +151,7 @@ public class BTLEActivity extends AppCompatActivity {
 
                     detenerBusquedaDispositivosBTLE();
 
-                    dispositivoUsuario = new nodeSensor(rssi, Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), bluetoothDevice.getName(),Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
+                    dispositivoUsuario = new Nodo(rssi, Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), bluetoothDevice.getName(),Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
 
                     ShowPopup();
 
@@ -416,7 +407,7 @@ public class BTLEActivity extends AppCompatActivity {
     }
 
     public void btnLink(View view) {
-        logica.guardarDispositivo(dispositivoUsuario,usuarioLogged);
+        logica.enlazarDispositivo(dispositivoUsuario,usuarioLogged);
         Toast.makeText(getApplicationContext(),
                 "Acabas de añadir a la lista de sensores: "+ dispositivoUsuario.getBeaconName() + ". Por tanto... ¡Dispositivo enlazado correctamente!",
                 Toast.LENGTH_LONG ).show();

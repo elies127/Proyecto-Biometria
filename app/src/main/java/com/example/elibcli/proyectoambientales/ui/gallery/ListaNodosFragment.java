@@ -5,7 +5,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.elibcli.proyectoambientales.R;
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
-import com.example.elibcli.proyectoambientales.data.model.nodeSensor;
+import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -28,13 +27,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Random;
 
-public class GalleryFragment extends Fragment {
+public class ListaNodosFragment extends Fragment {
     RecyclerView recyclerView;
     DatabaseReference database;
     MyAdapter myAdapter;
-    ArrayList<nodeSensor> list;
+    ArrayList<Nodo> list;
     LoggedInUser usuarioLogged;
     private String TAG = "LISTA DE SENSORES";
     private GalleryViewModel galleryViewModel;
@@ -68,8 +66,8 @@ public class GalleryFragment extends Fragment {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
 
                     for (DataSnapshot dataSnapshot : snapshot.getChildren()){
-                        Log.d(TAG, "Nodo obtenido: " +  dataSnapshot.getValue(nodeSensor.class).toString());
-                        nodeSensor node = dataSnapshot.getValue(nodeSensor.class); //adaptamos el resultado de Firebase al nuestro
+                        Log.d(TAG, "Nodo obtenido: " +  dataSnapshot.getValue(Nodo.class).toString());
+                        Nodo node = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
                         list.add(node); //Añadimos nodo detectado
 
 
