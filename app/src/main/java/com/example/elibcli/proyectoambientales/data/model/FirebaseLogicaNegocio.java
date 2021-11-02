@@ -1,10 +1,14 @@
 package com.example.elibcli.proyectoambientales.data.model;
 
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
+import com.example.elibcli.proyectoambientales.ui.gallery.MyAdapter;
 import com.google.firebase.Timestamp;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -38,12 +42,14 @@ public class FirebaseLogicaNegocio {
         @param usuario
 
      */
-    public void enlazarDispositivo(Nodo sensor, LoggedInUser usuario) {
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void enlazarDispositivo(Nodo nodo, LoggedInUser usuario) {
         HashMap<String, Object> docData = new HashMap<>();
-        docData.put(sensor.getUuid(), sensor.toMap());
+        docData.put(nodo.getUuid(), nodo.toMap());
+        docData.put("medidas", nodo.getMedidas());
         mDatabase = FirebaseDatabase.getInstance(urlDatabase);
-        Log.d("SENSOR", "Intentando guardar dispositivo en Firebase... -> " + sensor.toMap().toString());
-        mDatabase.getReference().child(usuario.getUserId() + "/sensores/").setValue(docData);
+        Log.d("SENSOR", "Intentando guardar dispositivo en Firebase... -> " + nodo.toMap().toString());
+        mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/nodos/" + nodo.getUuid()).setValue(nodo.toMap());
     }
     /*
      Diseño lógico:
@@ -52,10 +58,11 @@ public class FirebaseLogicaNegocio {
         @param usuario
 
      */
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void desenlazarDispositivos(Nodo sensor, LoggedInUser usuario) {
-        String child = usuario.getUserId() + "/sensores/" + sensor.getUuid();
+        String child = "usuarios/" + usuario.getUserId() + "/nodos/" + sensor.getUuid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-        Query applesQuery = ref.child(usuario.getUserId() + "/sensores/").orderByChild(sensor.getUuid()).equalTo(sensor.getUuid());
+        Query applesQuery = ref.child("usuarios/" + usuario.getUserId() + "/nodos/" + sensor.getUuid()).orderByChild(sensor.getUuid()).equalTo(sensor.getUuid());
         Log.d("SENSOR", "Intentando ELIMINAR dispositivo en Firebase... -> " + sensor.toMap().toString());
         ref = FirebaseDatabase.getInstance().getReference()
                 .child(child);
@@ -73,17 +80,20 @@ public class FirebaseLogicaNegocio {
 
      */
 
-    public void guardarMediciones(float datos, LoggedInUser usuario) {
+    public void guardarMediciones(Medida medida, LoggedInUser usuario, Nodo nodo) {
 
         //Generamos numeros aleatorios cada tiempoDeEspera. CAMBIAR por datos REALES del SENSOR
         HashMap<String, Object> docData = new HashMap<>();
-        docData.put("valor", datos);
-        docData.put("momento", new Timestamp(new Date()).toDate());
-        docData.put("usuario", usuario);
+
+        docData.put("valor", medida.getValor());
+       // docData.put("datetime", new Timestamp(new Date()).toDate());
+        docData.put("latitud", medida.getLatitud());
+        docData.put("longitud", medida.getLongitud());
+        docData.put("tipo", medida.getTipo());
 
         mDatabase = FirebaseDatabase.getInstance(urlDatabase);
 
-        mDatabase.getReference().child(usuario.getUserId() + "/datos/").setValue(docData);
+        mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/nodos/" + nodo.getUuid() + "/medidas/" + new Date()).setValue(docData);
 
 
     }
@@ -98,11 +108,13 @@ public class FirebaseLogicaNegocio {
 
     public ArrayList<Nodo> obtenerListaNodos(LoggedInUser usuarioLogged) {
 
-        database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child(usuarioLogged.getUserId() + "/sensores/");
-        Log.d(TAG, "Intentando obtener los datos de " + FirebaseLogicaNegocio.urlDatabase + " con este child: " + usuarioLogged.getUserId() + "/sensores/");
+        database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
+        Log.d(TAG, "Intentando obtener los datos de " + FirebaseLogicaNegocio.urlDatabase + " con este child: usuarios/" + usuarioLogged.getUserId() + "/nodos/");
 
 
-        lista = new ArrayList<>();
+        ArrayList<Nodo> lista = new ArrayList<>();
+
+
 
 
         database.addValueEventListener(new ValueEventListener() {
@@ -110,9 +122,47 @@ public class FirebaseLogicaNegocio {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    Log.d(TAG, "Nodo obtenido: " + dataSnapshot.getValue().toString());
                     Log.d(TAG, "Nodo obtenido: " + dataSnapshot.getValue(Nodo.class).toString());
+
                     Nodo node = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
                     lista.add(node); //Añadimos nodo detectado
+
+
+                }
+
+
+            }
+
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.d(TAG, "No se ha encontrado ningun nodo... error... " + error);
+            }
+        });
+
+
+        return lista;
+    }
+
+    public ArrayList<Medida> obtenerUltimasMediciones(Nodo nodo, LoggedInUser usuarioLogged) throws InterruptedException {
+
+        Thread.sleep(1000);
+        database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/" + nodo.getUuid() + "/medidas/");
+        Log.d(TAG, "Intentando obtener los datos de " + FirebaseLogicaNegocio.urlDatabase + " con este child: usuarios/" + usuarioLogged.getUserId() + "/nodos/" + obtenerListaNodos(usuarioLogged).get(obtenerListaNodos(usuarioLogged).size()-1) + "/medidas/");
+
+
+        ArrayList<Medida> lista = new ArrayList<>(); //Esta lista es distinta puesto que devuelve medidas.
+
+
+        database.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    Log.d(TAG, "Medida obtenido: " + dataSnapshot.getValue(Medida.class).toString());
+                    Medida medida = dataSnapshot.getValue(Medida.class); //adaptamos el resultado de Firebase al nuestro
+                    lista.add(medida); //Añadimos nodo detectado
 
 
                 }
@@ -129,10 +179,6 @@ public class FirebaseLogicaNegocio {
         return lista;
     }
 
-    public String[] obtenerUltimasMediciones(int n) {
-
-        return null;
-    }
 }
 
 

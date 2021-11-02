@@ -77,14 +77,6 @@ public class HomeFragment extends Fragment {
             // ya estaba arrancado
             return;
         }
-/*
-        Log.d(ETIQUETA_LOG, " MainActivity.constructor : voy a arrancar el servicio");
-
-        this.elIntentDelServicio = new Intent(getContext(), ServicioEscucharBeacons.class);
-
-        this.elIntentDelServicio.putExtra("tiempoDeEspera", (long) 5000);
-        getActivity().startService(this.elIntentDelServicio);
-*/
 
         startService();
         //Toast message para representar feedback -- El servicio se ha ejecutado

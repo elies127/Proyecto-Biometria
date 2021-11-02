@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.elibcli.proyectoambientales.MainActivity;
 import com.example.elibcli.proyectoambientales.R;
+import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -26,6 +27,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
@@ -43,8 +45,13 @@ import com.google.firebase.auth.PlayGamesAuthProvider;
 import com.google.firebase.auth.SignInMethodQueryResult;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -140,19 +147,63 @@ public class LoginActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 FirebaseUserMetadata metadata = user.getMetadata();
+
+
                 if (metadata.getCreationTimestamp() == metadata.getLastSignInTimestamp()) {
                     // The user is new, show them a fancy intro screen!
-                    Toast.makeText(this, "¡Bienvenido! " + user.getDisplayName(), Toast.LENGTH_LONG).show();
 
+                    Toast.makeText(this, "¡Bienvenido! " + user.getDisplayName(), Toast.LENGTH_LONG).show();
+                    usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber(), user.getPhotoUrl().toString());
+
+                    HashMap<String, Object> docData = new HashMap<>();
+
+                    docData.put("nombre", usuario.getNombre());
+                    docData.put("correo", usuario.getCorreo());
+                    docData.put("telefono", usuario.getNumbertlf());//Reemplazar por el numero real cuando se implemente la edicion del perfil
+                    docData.put("foto", usuario.getUrlFoto());//Reemplazar por el numero real cuando se implemente la edicion del perfil
+                    docData.put("coins", "0"); //Reemplazar por valores reales cuando se realice la implementacion de las monedas
+
+                    FirebaseDatabase mDatabase = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase);
+                    //Telemetria
+                    HashMap<String, Object> docDataTelemetria = new HashMap<>();
+                    Date lastLoggin = new Date(user.getMetadata().getLastSignInTimestamp());
+
+                    SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss"); //Convertimos el ultimo inicio de sesion a un formato de fecha legible
+                    sfd.format(lastLoggin);
+
+
+
+                    docDataTelemetria.put("sesionActual", lastLoggin);
+                    docDataTelemetria.put("primeraSesion", lastLoggin);
+
+                    mDatabase.getReference().child("usuarios/" + usuario.getUserId()).setValue(docData);
+                    Log.d("LOGGIN", "Registrando hora... " + lastLoggin);
+                    mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/telemetria/" + lastLoggin).setValue(docDataTelemetria);
                 } else {
                     // This is an existing user, show them a welcome back screen.
                     Toast.makeText(this, "Bienvenido de nuevo, " + user.getDisplayName(), Toast.LENGTH_LONG).show();
-                    if(pref.getBoolean("voces", true)){
+
+                    usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber(), user.getPhotoUrl().toString());
+
+                    HashMap<String, Object> docData = new HashMap<>();
+
+                    FirebaseDatabase mDatabase = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase);
+                    //Telemetria
+                    HashMap<String, Object> docDataTelemetria = new HashMap<>();
+
+                    Date lastLoggin = new Date(user.getMetadata().getLastSignInTimestamp());
+
+                    SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss"); //Convertimos el ultimo inicio de sesion a un formato de fecha legible
+                    sfd.format(lastLoggin);
+
+
+                    docDataTelemetria.put("ultimaSesion", lastLoggin.toString());
+                    docDataTelemetria.put("sesionActual", new Date().toString());
 
 
 
-                    }
-
+                    Log.d("LOGGIN", "Registrando hora... " + lastLoggin);
+                    mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/telemetria/" + lastLoggin).setValue(docDataTelemetria);
                 }
                 startActivity(new Intent(this, MainActivity.class));
 

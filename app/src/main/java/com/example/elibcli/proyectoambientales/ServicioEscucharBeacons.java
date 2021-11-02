@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
+import com.example.elibcli.proyectoambientales.data.model.Medida;
+import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
@@ -19,10 +21,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ServerTimestamp;
+import com.google.type.Date;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -141,7 +145,9 @@ public class ServicioEscucharBeacons extends IntentService {
                     LoggedInUser usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail());
                     FirebaseLogicaNegocio logica = new FirebaseLogicaNegocio();
                     Random rand = new Random();
-                    logica.guardarMediciones(rand.nextFloat()*100, usuarioLogged); //Do what you need to do with the id
+                    Nodo nodoTemporal = new Nodo(2, 40, 40, "Nodo Hardcoded en ServicioEscucharBeacons",
+                            "NodoHardcoded", 60);
+                    logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1" ), usuarioLogged, nodoTemporal); //Do what you need to do with the id
                 }
 
 

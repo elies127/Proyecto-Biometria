@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
     private static final String ETIQUETA_LOG = ">>>>";
 
-    private Intent elIntentDelServicio = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

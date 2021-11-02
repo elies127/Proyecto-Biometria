@@ -9,17 +9,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import com.example.elibcli.proyectoambientales.MainActivity;
 import com.example.elibcli.proyectoambientales.R;
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
+import com.example.elibcli.proyectoambientales.data.model.Medida;
 import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.example.elibcli.proyectoambientales.ui.login.LoginActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
+import com.google.firebase.database.ValueEventListener;
+import com.google.type.Date;
 
 import java.util.ArrayList;
 
@@ -27,6 +37,8 @@ public class SegundoPlanoLecturaSensor extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
     private LoggedInUser usuarioLogged;
     FirebaseLogicaNegocio logica;
+    private DatabaseReference database;
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void actualizarNotificacion(String texto) {
 
@@ -38,18 +50,76 @@ public class SegundoPlanoLecturaSensor extends Service {
                 .setContentTitle("Recopilando datos")
                 .setContentText(texto)
                 .setSmallIcon(R.drawable.ic_menu_slideshow)
-                .setContentIntent(pendingIntent)
+                .setContentIntent(pendingIntent).setOnlyAlertOnce(true)
+                .setDefaults( Notification.PRIORITY_LOW)
+
                 .build();
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
         mNotificationManager.notify(1, notification);
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void lecturaDatos() throws InterruptedException {
+    Medida medida;
+    String texto = "Descargando datos...";
+    ArrayList<Nodo> listaNodos = logica.obtenerListaNodos(usuarioLogged);
+/*
+    database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
+        database.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-    ArrayList<Nodo> lista = logica.obtenerListaNodos(usuarioLogged);
-    actualizarNotificacion(lista.toString());
-    Thread.sleep(1000);
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
+                    Log.d("NODO", "Nodo obtenido: " +  dataSnapshot.getValue().toString());
+                    Log.d("NODO", "Nodo obtenido: " +  dataSnapshot.getValue(Nodo.class).toString());
+                    dataSnapshot.getValue().toString();
+                    Nodo node = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
+                    listaNodos.add(node); //Añadimos nodo detectado
+
+                    Nodo nodoTemporal = new Nodo(2, 40, 40, "Nodo Hardcoded en ServicioEscucharBeacons",
+                            "NodoHardcoded", 60);
+                    logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1" ), usuarioLogged, nodoTemporal);
+                    Log.d("NOTIFICACIONES", "Intentando descargar nodos... " + listaNodos.toString());
+                }
+
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        */
+
+    /* */
+
+
+
+
+
+    Log.d("NOTIFICACIONES", "Intentando descargar nodos... " + listaNodos.toString());
+    ArrayList<Medida> listaMedidas = new ArrayList<>();
+
+        for (int i=0;i<listaNodos.size();i++) {
+            listaMedidas = listaNodos.get(listaNodos.lastIndexOf(listaNodos)).getMedidas();
+
+            System.out.println(listaNodos.get(listaNodos.lastIndexOf(listaNodos)).getMedidas());
+
+            for (int j=0;j<listaMedidas.size();j++){
+                System.out.println(listaNodos.get(i).getMedidas().get(j));
+
+                int valor = listaMedidas.lastIndexOf(listaMedidas);
+                medida = listaMedidas.get(valor);
+                texto = medida.toString();
+            }
+
+        }
+
+
+    actualizarNotificacion(texto);
+    Thread.sleep(5000);
     lecturaDatos();
     }
 
@@ -80,7 +150,16 @@ public class SegundoPlanoLecturaSensor extends Service {
                     .build();
 
             startForeground(1, notification);
-
+            Nodo nodoTemporal = new Nodo(2, 40, 40, "-89249499",
+                    "NodoHardcoded", 60);
+            logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1" ), usuarioLogged, nodoTemporal);
+            try {
+                lecturaDatos();
+            } catch (InterruptedException e) {
+                Log.d("LecturaDatos", "Error GRABE: " + e);
+                Log.d("LecturaDatos", "---------------------");
+                e.printStackTrace();
+            }
             //do heavy work on a background thread
 
         } else { //Se ha cerrado la sesion!! Notificamos al usurio
