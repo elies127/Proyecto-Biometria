@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -147,7 +148,7 @@ public class ServicioEscucharBeacons extends IntentService {
                     Random rand = new Random();
                     Nodo nodoTemporal = new Nodo(2, 40, 40, "Nodo Hardcoded en ServicioEscucharBeacons",
                             "NodoHardcoded", 60);
-                    logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1" ), usuarioLogged, nodoTemporal); //Do what you need to do with the id
+                    logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1", UUID.randomUUID().toString()), usuarioLogged, nodoTemporal); //Do what you need to do with the id
                 }
 
 

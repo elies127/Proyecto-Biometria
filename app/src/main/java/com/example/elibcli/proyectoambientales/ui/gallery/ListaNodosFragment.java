@@ -33,6 +33,7 @@ import com.google.firebase.firestore.ServerTimestamp;
 import com.google.type.Date;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class ListaNodosFragment extends Fragment {
     RecyclerView recyclerView;
@@ -85,9 +86,7 @@ public class ListaNodosFragment extends Fragment {
                         dataSnapshot.getValue().toString();
                         Nodo node = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
                         list.add(node); //Añadimos nodo detectado
-                        Nodo nodoTemporal = new Nodo(2, 40, 40, "Nodo Hardcoded en ServicioEscucharBeacons",
-                                "NodoHardcoded", 60);
-                        logicaNegocio.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1" ), usuarioLogged, nodoTemporal);
+
 
                     }
                     myAdapter.notifyDataSetChanged();

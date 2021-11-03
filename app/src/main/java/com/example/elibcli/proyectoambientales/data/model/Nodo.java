@@ -28,7 +28,7 @@ public class Nodo {
     private String beaconName;
     private String uuid;
     private Date a;
-    private ArrayList<Medida> medidas;
+    private HashMap<String, Medida> medidas;
 
     public Nodo(){
 
@@ -40,10 +40,10 @@ public class Nodo {
         this.minor = minor;
         this.beaconName = beaconName;
         this.txPower = txPower;
-        this.medidas = new ArrayList<Medida>();
-
-        Medida medida = new Medida(Date.newBuilder().build(), "69", 1.2f, 1.5f, "1");
-        this.medidas.add(medida) ;//Simulamos una medicion, el constructor no nos introdujo una
+        this.medidas = new HashMap<String, Medida>();
+        String uuidMedida = UUID.randomUUID().toString();
+        Medida medida = new Medida(Date.newBuilder().build(), "69", 1.2f, 1.5f, "1", uuidMedida);
+        this.medidas.put(uuidMedida, medida) ; //Simulamos una medicion, el constructor no nos introdujo una
         try{
             UUID uuid = UUID.fromString(uuidIncome);
             this.uuid = uuid.toString();
@@ -58,13 +58,20 @@ public class Nodo {
         }
 
     }
-    @Exclude
+
     //Metodo para añadir medidas
-    public void addMedida(Date date, String valor, String lat, String lon, String tipo){
-        this.medidas.add(new Medida(date, valor, Float.parseFloat(lat), Float.parseFloat(lon), tipo));
+    public void setMedida(Date date, String valor, String lat, String lon, String tipo){
+        String uuidMedida = UUID.randomUUID().toString();
+        this.medidas.put(uuidMedida, new Medida(date, valor, Float.parseFloat(lat), Float.parseFloat(lon), tipo, uuidMedida));
     }
 
-    public Nodo(int noise, int major, int minor, String beaconName, String uuidIncome, int txPower, ArrayList<Medida> medidas) {
+
+    public Medida getMedidaFromUUID(String uuid){
+        return this.medidas.get(uuid);
+
+    }
+
+    public Nodo(int noise, int major, int minor, String beaconName, String uuidIncome, int txPower, HashMap<String, Medida> medidas) {
         this.noise = noise;
         this.major = major;
         this.minor = minor;
@@ -101,8 +108,8 @@ public class Nodo {
         return result;
 
     }
-    @Exclude
-    public ArrayList<Medida> getMedidas(){
+
+    public HashMap<String, Medida> getMedidas(){
         return medidas;
     }
     public int getNoise() {

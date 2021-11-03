@@ -8,10 +8,14 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.example.elibcli.proyectoambientales.MainActivity;
@@ -23,31 +27,36 @@ import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.example.elibcli.proyectoambientales.ui.login.LoginActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
-import com.google.firebase.database.ValueEventListener;
 import com.google.type.Date;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class SegundoPlanoLecturaSensor extends Service {
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
     private LoggedInUser usuarioLogged;
+    private String tituloNoti = "";
     FirebaseLogicaNegocio logica;
     private DatabaseReference database;
-
+    private HashMap<String, Medida> medidas;
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void actualizarNotificacion(String texto) {
+    private String textoNoti;
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void actualizarNotificacion(String texto, String titulo) {
 
 
         Intent notificationIntent = new Intent(this, LoginActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 0, notificationIntent, 0);
         Notification notification = new Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle("Recopilando datos")
+                .setContentTitle("Recopilando datos").setStyle(new Notification.BigTextStyle()
+                        .bigText(textoNoti))
                 .setContentText(texto)
                 .setSmallIcon(R.drawable.ic_menu_slideshow)
                 .setContentIntent(pendingIntent).setOnlyAlertOnce(true)
@@ -60,10 +69,74 @@ public class SegundoPlanoLecturaSensor extends Service {
         mNotificationManager.notify(1, notification);
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void lecturaDatos() throws InterruptedException {
-    Medida medida;
-    String texto = "Descargando datos...";
-    ArrayList<Nodo> listaNodos = logica.obtenerListaNodos(usuarioLogged);
+    private Runnable lecturaDatos() throws InterruptedException {
+
+        HandlerThread handlerThread = new HandlerThread("MyHandlerThread");
+        handlerThread.start();
+        Looper looper = handlerThread.getLooper();
+        Handler handler = new Handler(looper);
+        handler.post(new Runnable(){
+
+
+            @Override
+            public void run() {
+                Medida medida;
+                textoNoti = "Descargando datos...";
+                tituloNoti = "Buscando nodos...";
+
+
+                database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
+
+                database.limitToLast(1).orderByKey().addChildEventListener(new ChildEventListener() {
+                                              @Override
+                                              public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+                                                  HashMap<String, Medida> listaMedidas = new HashMap<>();
+                                                  Log.d("NOTIFICACIONES", "Key: " + dataSnapshot.getKey() + " Nodo obtenido: " + dataSnapshot.getValue(Nodo.class).getMedidas().toString());
+                                                  Nodo nodo = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
+                                                  Log.d("NOTIFICACIONES", "Medida obtenida " + nodo.getMedidas());
+                                                  listaMedidas = nodo.getMedidas();
+
+                                                  Log.d("NOTIFICACIONES", "Mediciones de listaMedidas.toString() - " + listaMedidas.toString());
+                                                  textoNoti = "Hay un total de "+ listaMedidas.size() + " mediciones.";
+                                                  tituloNoti = "Nodo: "+ nodo.getBeaconName() + " conectado";
+                                                  actualizarNotificacion(textoNoti,tituloNoti);
+                                                  try {
+                                                      handler.postDelayed(lecturaDatos(), 10000);
+
+                                                  } catch (InterruptedException e) {
+                                                      Log.d("NOTIFICACIONES", "Error en el thread secundario" + e);
+                                                  }
+                                              }
+
+                    @Override
+                    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+
+                });
+
+
+
+
+
+            }
+        });
+
 /*
     database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
         database.addValueEventListener(new ValueEventListener() {
@@ -96,31 +169,7 @@ public class SegundoPlanoLecturaSensor extends Service {
     /* */
 
 
-
-
-
-    Log.d("NOTIFICACIONES", "Intentando descargar nodos... " + listaNodos.toString());
-    ArrayList<Medida> listaMedidas = new ArrayList<>();
-
-        for (int i=0;i<listaNodos.size();i++) {
-            listaMedidas = listaNodos.get(listaNodos.lastIndexOf(listaNodos)).getMedidas();
-
-            System.out.println(listaNodos.get(listaNodos.lastIndexOf(listaNodos)).getMedidas());
-
-            for (int j=0;j<listaMedidas.size();j++){
-                System.out.println(listaNodos.get(i).getMedidas().get(j));
-
-                int valor = listaMedidas.lastIndexOf(listaMedidas);
-                medida = listaMedidas.get(valor);
-                texto = medida.toString();
-            }
-
-        }
-
-
-    actualizarNotificacion(texto);
-    Thread.sleep(5000);
-    lecturaDatos();
+        return null;
     }
 
     @Override
@@ -144,7 +193,8 @@ public class SegundoPlanoLecturaSensor extends Service {
 
             Notification notification = new Notification.Builder(this, CHANNEL_ID)
                     .setContentTitle("Recopilando datos")
-                    .setContentText(input)
+                    .setContentText(input).setStyle(new Notification.BigTextStyle()
+                            .bigText(textoNoti))
                     .setSmallIcon(R.drawable.ic_menu_slideshow)
                     .setContentIntent(pendingIntent)
                     .build();
@@ -152,7 +202,7 @@ public class SegundoPlanoLecturaSensor extends Service {
             startForeground(1, notification);
             Nodo nodoTemporal = new Nodo(2, 40, 40, "-89249499",
                     "NodoHardcoded", 60);
-            logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1" ), usuarioLogged, nodoTemporal);
+            logica.guardarMediciones(new Medida(Date.newBuilder().build(), "Hardcoded1", 1f, 1f, "1", UUID.randomUUID().toString()), usuarioLogged, nodoTemporal);
             try {
                 lecturaDatos();
             } catch (InterruptedException e) {

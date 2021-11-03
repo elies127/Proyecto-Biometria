@@ -28,13 +28,13 @@ import java.util.HashMap;
 
 
 public class FirebaseLogicaNegocio {
-
+    HashMap<String, Medida> listaMedidas = new HashMap<>();
     public static String urlDatabase = "https://medioambiente-c564b-default-rtdb.europe-west1.firebasedatabase.app";
     DatabaseReference database;
     ArrayList<Nodo> lista;
     private FirebaseDatabase mDatabase; //Real time database - Menor cantidad de datos a tiempo real.
     private FirebaseFirestore db = FirebaseFirestore.getInstance(); //Firestore database - Más lenta, mayor cantidad de datos
-    private String TAG = "NOTIFICACIONES";
+    private String TAG = "LOGICA";
     /*
      Diseño lógico:
         [Sensor],[usuario] -> guardarDispositivo()
@@ -178,9 +178,42 @@ public class FirebaseLogicaNegocio {
         });
         return lista;
     }
+    public HashMap<String, Medida> obtenerMedidas(Nodo nodo, LoggedInUser usuarioLogged)
+    {
+        database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/" + nodo.getUuid());
+        Log.d(TAG, "Intentando obtener los datos de " + FirebaseLogicaNegocio.urlDatabase + " con este child: usuarios/" + usuarioLogged.getUserId() + "/nodos/");
 
+
+        //Esta lista es distinta puesto que devuelve medidas.
+
+
+        database.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    Log.d(TAG, "Nodo obtenido: " + dataSnapshot.getValue(Nodo.class).toString());
+                    Nodo nodo = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
+                    listaMedidas.put(dataSnapshot.getKey(), nodo.getMedidaFromUUID(dataSnapshot.getKey())); //Añadimos nodo detectado
+                    Log.d(TAG, "Medida obtenida " + nodo.getMedidaFromUUID(dataSnapshot.getKey()).toString());
+                    Log.d(TAG, "Mediciones de lista.toString() - " + listaMedidas.toString());
+
+                }
+
+
+            }
+
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+
+        });
+        Log.d(TAG, "Mediciones de lista.toString() - " + lista.toString());
+        return listaMedidas;
+    }
 }
-
 
 //--------------------------------
 //-------------------------------- Esto lo usaremos probablemente en un futuro cuand osea necesario guardar datos mas complejos

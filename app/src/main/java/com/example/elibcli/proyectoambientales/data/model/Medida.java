@@ -11,14 +11,16 @@ public class Medida {
     private float latitud;
     private float longitud;
     private String tipo;
+    private  String uuidMedida;
     public Medida(){}
 
-    public Medida(Date datetime, String valor, float latitud, float longitud, String tipo) {
+    public Medida(Date datetime, String valor, float latitud, float longitud, String tipo , String uuidMedida) {
         this.datetime = datetime;
         this.valor = valor;
         this.latitud = latitud;
         this.longitud = longitud;
         this.tipo = tipo;
+        this.uuidMedida = uuidMedida;
     }
     @Exclude
     public Date getDatetime() {
