@@ -10,11 +10,13 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -28,11 +30,16 @@ import androidx.core.content.ContextCompat;
 
 import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
+import com.example.elibcli.proyectoambientales.data.model.Medida;
 import com.example.elibcli.proyectoambientales.data.model.Nodo;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.type.Date;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 // ------------------------------------------------------------------
 // ------------------------------------------------------------------
@@ -62,6 +69,7 @@ public class BTLEActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " buscarTodosLosDispositivosBTL(): instalamos scan callback ");
 
         this.callbackDelEscaneo = new ScanCallback() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onScanResult(int callbackType, ScanResult resultado) {
                 super.onScanResult(callbackType, resultado);
@@ -95,6 +103,7 @@ public class BTLEActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void mostrarInformacionDispositivoBTLE(ScanResult resultado) {
 
         BluetoothDevice bluetoothDevice = resultado.getDevice();
@@ -199,21 +208,66 @@ public class BTLEActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    private void buscarEsteDispositivoBTLE(final String dispositivoBuscado) {
+    private void buscarEsteDispositivoBTLE(final String dispositivoBuscado ) {
         Log.d(ETIQUETA_LOG, " buscarEsteDispositivoBTLE(): empieza ");
 
         Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): instalamos scan callback ");
 
 
-        // super.onScanResult(ScanSettings.SCAN_MODE_LOW_LATENCY, result); para ahorro de energía
+        // super.onScanResult(ScanSettings.SCAN_MODE_LOW_LATENCY, result); para ahorro de energÃ­a
 
         this.callbackDelEscaneo = new ScanCallback() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
-            public void onScanResult(int callbackType, ScanResult resultado) {
+            public void onScanResult( int callbackType, ScanResult resultado ) {
                 super.onScanResult(callbackType, resultado);
-                Log.d(ETIQUETA_LOG, " -- Resultado de buscarEsteDispositivoBTLE(): onScanResult() ");
-
+                Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onScanResult() ");
                 mostrarInformacionDispositivoBTLE(resultado);
+                byte[] bytes = resultado.getScanRecord().getBytes();
+
+                TramaIBeacon tib = new TramaIBeacon(bytes);
+
+                if (Utilidades.bytesToString(tib.getUUID()).equals("EPSG-GTI-PROY-3A")){
+
+                    //Creamos un objeto calendar que guardara la fecha
+
+                   Date date = Date.newBuilder().build();
+                    // Instanciamos las variables que usaremos para recopilar los datos
+                    float valorCO;
+                    float valorCO2;
+
+                    float valorO3;
+                    float valorTemperatura;
+
+                    String texto;
+                    String valor;
+
+                    // Deconstruimos el major
+                    texto = Integer.toString(Utilidades.bytesToInt(tib.getMajor()));
+
+                    valorCO = recogerDatos(texto,1);
+                    Log.e("Test", "ValorCO " + valorCO);
+                    valorCO2 = recogerDatos(texto,2);
+                    Log.e("Test", "ValorCO2 " + valorCO2);
+
+                    // Deconstruimos el minor
+                    texto = Integer.toString(Utilidades.bytesToInt(tib.getMinor()));
+
+                    valorO3 = recogerDatos(texto,1);
+                    Log.e("Test", "ValorO3 " + valorO3);
+                    valorTemperatura = recogerDatos(texto,2);
+                    Log.e("Test", "ValorTemperatura " + valorTemperatura);
+
+                    Medida medicionCO2 = new Medida(date, String.valueOf(valorCO2), MainActivity.getLatitud(), MainActivity.getLongitud(), "co2", UUID.randomUUID().toString());
+                    Medida medicionCO = new Medida(date,  String.valueOf(valorCO), MainActivity.getLatitud(), MainActivity.getLongitud(), "co", UUID.randomUUID().toString());
+                    Medida medicionO3 = new Medida(date,  String.valueOf(valorO3), MainActivity.getLatitud(), MainActivity.getLongitud(), "o3", UUID.randomUUID().toString());
+                    Medida medicionTemperatura = new Medida(date,  String.valueOf(valorTemperatura), MainActivity.getLatitud(), MainActivity.getLongitud(), "temperatura", UUID.randomUUID().toString());
+
+
+
+
+                    SystemClock.sleep(2500); //ms
+                }
             }
 
             @Override
@@ -231,13 +285,20 @@ public class BTLEActivity extends AppCompatActivity {
             }
         };
 
-        ScanFilter sf = new ScanFilter.Builder().setDeviceName(dispositivoBuscado).build();
+        List<ScanFilter> filters = new ArrayList<>();
+        ScanFilter sf = new ScanFilter.Builder().setDeviceName( dispositivoBuscado ).build();
+        filters.add(sf);
 
-        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado);
+
+        ScanSettings settings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                .build();
+
+        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado );
         //Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado
         //      + " -> " + Utilidades.stringToUUID( dispositivoBuscado ) );
 
-        this.elEscanner.startScan(this.callbackDelEscaneo);
+        this.elEscanner.startScan(filters,settings,this.callbackDelEscaneo);
     } // ()
 
 
@@ -415,7 +476,41 @@ public class BTLEActivity extends AppCompatActivity {
                 "Acabas de añadir a la lista de sensores: "+ dispositivoUsuario.getBeaconName() + ". Por tanto... ¡Dispositivo enlazado correctamente!",
                 Toast.LENGTH_LONG ).show();
     }
-} // class
+
+    private int recogerDatos(String datos, int tipo) {
+
+        int valor = 0;
+        String texto = "";
+        char cadaDato[] = datos.toCharArray();
+        if (tipo == 1) {
+            if ('-' == cadaDato[0]) {
+                texto = cadaDato[0] + "" + cadaDato[1] + "" + cadaDato[2];
+                valor = Integer.parseInt(texto);
+                return valor;
+            } else {
+                texto = cadaDato[0] + "" + cadaDato[1];
+                valor = Integer.parseInt(texto);
+                return valor;
+            }
+        } else {
+            if ('-' == cadaDato[2]) {
+                texto = cadaDato[2] + "" + cadaDato[3] + "" + cadaDato[4];
+                valor = Integer.parseInt(texto);
+                return valor;
+            } else {
+                if (datos.length() == 4) {
+                    texto = cadaDato[2] + "" + cadaDato[3];
+                    valor = Integer.parseInt(texto);
+                    return valor;
+                } else {
+                    texto = cadaDato[3] + "" + cadaDato[4];
+                    valor = Integer.parseInt(texto);
+                    return valor;
+                }
+            }
+        }
+    }
+}
 // --------------------------------------------------------------
 // --------------------------------------------------------------
 // --------------------------------------------------------------

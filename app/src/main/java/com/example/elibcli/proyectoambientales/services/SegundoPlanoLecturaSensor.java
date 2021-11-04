@@ -84,12 +84,23 @@ public class SegundoPlanoLecturaSensor extends Service {
                 textoNoti = "Descargando datos...";
                 tituloNoti = "Buscando nodos...";
 
-
+               /* try {
+                    handlerThread.getLooper().wait(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                */
                 database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
 
                 database.limitToLast(1).orderByKey().addChildEventListener(new ChildEventListener() {
                                               @Override
                                               public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+                                                  try {
+                                                      handler.postDelayed(lecturaDatos(), 10000);
+
+                                                  } catch (InterruptedException e) {
+                                                      Log.d("NOTIFICACIONES", "Error en el thread secundario" + e);
+                                                  }
                                                   HashMap<String, Medida> listaMedidas = new HashMap<>();
                                                   Log.d("NOTIFICACIONES", "Key: " + dataSnapshot.getKey() + " Nodo obtenido: " + dataSnapshot.getValue(Nodo.class).getMedidas().toString());
                                                   Nodo nodo = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
@@ -100,12 +111,8 @@ public class SegundoPlanoLecturaSensor extends Service {
                                                   textoNoti = "Hay un total de "+ listaMedidas.size() + " mediciones.";
                                                   tituloNoti = "Nodo: "+ nodo.getBeaconName() + " conectado";
                                                   actualizarNotificacion(textoNoti,tituloNoti);
-                                                  try {
-                                                      handler.postDelayed(lecturaDatos(), 10000);
 
-                                                  } catch (InterruptedException e) {
-                                                      Log.d("NOTIFICACIONES", "Error en el thread secundario" + e);
-                                                  }
+
                                               }
 
                     @Override

@@ -1,6 +1,8 @@
 package com.example.elibcli.proyectoambientales;
 
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,11 +20,25 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener {
 
     private AppBarConfiguration mAppBarConfiguration;
     private static final String ETIQUETA_LOG = ">>>>";
+    private static float longitud;
+    private static float latitud;
+    // Devuelve el valor de latitud
+    // -> getLatitud() -> latitud : double
+    // @returns La coordenada de la latitud
+    public static float getLatitud() {
+        return latitud;
+    }
 
+    // Devuelve el valor de longitud
+    // -> getLongitud() -> longitud : double
+    // @returns La coordenada de la longitud
+    public static float getLongitud() {
+        return longitud;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +85,26 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 
     // ------------ Recursos base
