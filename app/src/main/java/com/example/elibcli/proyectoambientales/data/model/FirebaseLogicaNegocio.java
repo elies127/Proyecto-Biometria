@@ -53,10 +53,10 @@ public class FirebaseLogicaNegocio {
         docData.put("medidas", nodo.getMedidas());
         mDatabase = FirebaseDatabase.getInstance(urlDatabase);
         Log.d("SENSOR", "Intentando guardar dispositivo en Firebase... -> " + nodo.toMap().toString());
-        mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/nodos/" + nodo.getUuid()).setValue(nodo.toMap());
+     //   mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/nodos/" + nodo.getUuid()).setValue(nodo.toMap());
 
         nDatabase.collection("usuarios").document(usuario.getUserId()).collection("nodos").document(nodo.getUuid())
-                .set(docData)
+                .set(nodo.toMap())
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {

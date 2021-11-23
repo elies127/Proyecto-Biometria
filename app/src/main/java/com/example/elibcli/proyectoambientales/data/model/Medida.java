@@ -1,7 +1,7 @@
 package com.example.elibcli.proyectoambientales.data.model;
 
 
-import com.google.firebase.database.Exclude;
+import com.google.firebase.firestore.Exclude;
 import com.google.type.Date;
 
 public class Medida {

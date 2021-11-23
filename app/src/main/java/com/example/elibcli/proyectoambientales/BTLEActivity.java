@@ -163,7 +163,9 @@ public class BTLEActivity extends AppCompatActivity {
                     Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
                     Toast.makeText(getApplicationContext(), "¡He encontrado el dispositivo filtrado: " + bluetoothDevice.getName(), Toast.LENGTH_SHORT).show();
                     if (primeraVezMostrado) {
-
+                        dispositivoUsuario = new Nodo(resultado.getRssi(), Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()),
+                                resultado.getDevice().getName(), Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
+                        Log.d(TAG, "Intentando crear objeto dispositivoUsuario - " + dispositivoUsuario.toString());
                         detenerBusquedaDispositivosBTLE();
                         ShowPopup();
                         primeraVezMostrado = false;
@@ -238,7 +240,9 @@ public class BTLEActivity extends AppCompatActivity {
                 Log.d("Tratando de enlazar arduino", Utilidades.bytesToString(tib.getUUID()));
                 if (Utilidades.bytesToString(tib.getUUID()).equals(filtro.getText())) {
                 //if (Utilidades.bytesToString(tib.getUUID()).equals("EPSG-GTI-PROY-3A")) {
-                    dispositivoUsuario = new Nodo(resultado.getRssi(), Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), resultado.getDevice().getName(), Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
+                    dispositivoUsuario = new Nodo(resultado.getRssi(), Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()),
+                            resultado.getDevice().getName(), Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
+                    Log.d(TAG, "Intentando crear objeto dispositivoUsuario - " + dispositivoUsuario.toString());
                     //Creamos un objeto calendar que guardara la fecha
 
                     Date date = Date.newBuilder().build();
@@ -331,7 +335,7 @@ public class BTLEActivity extends AppCompatActivity {
         txtminor = myDialog.findViewById(R.id.minor_value);
         txtnoise = myDialog.findViewById(R.id.noise_value);
         txtname = myDialog.findViewById(R.id.name_value);
-
+        Log.d(TAG, dispositivoUsuario.toString());
         txtmajor.setText(String.valueOf(dispositivoUsuario.getMajor()));
         txtminor.setText(String.valueOf(dispositivoUsuario.getMinor()));
         txtnoise.setText(String.valueOf(dispositivoUsuario.getNoise()));
