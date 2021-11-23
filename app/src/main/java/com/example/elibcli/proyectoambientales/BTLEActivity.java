@@ -16,6 +16,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
@@ -57,9 +58,13 @@ public class BTLEActivity extends AppCompatActivity {
     private LoggedInUser usuarioLogged;
     private FirebaseLogicaNegocio logica;
     private BluetoothLeScanner elEscanner;
-
+    private String TAG = "BTLE ---";
+    private final int TIEMPO = 2500;
+    Handler handler = new Handler();
     private ScanCallback callbackDelEscaneo = null;
     private String nuestroBeacon; //Valor major de nuestro beacon para identificarlo
+    private ArrayList<Medida> medidasParaSubir = new ArrayList<>();
+    private boolean primeraVezMostrado = true;
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -100,7 +105,6 @@ public class BTLEActivity extends AppCompatActivity {
     } // ()
 
 
-
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -137,38 +141,36 @@ public class BTLEActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " Major = " + Utilidades.bytesToInt(tib.getMajor()));
         Log.d(ETIQUETA_LOG, " Minor = " + Utilidades.bytesToInt(tib.getMinor()));
         Log.d(ETIQUETA_LOG, " ESTABLECIENDO TEXTVIEWS...----------");
-        if(filtro.getText().length() == 0){
+        if (filtro.getText().length() == 0) {
 
             beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
                     + "-----------" + System.getProperty("line.separator")
-                    + "Nombre: " +  bluetoothDevice.getName()
+                    + "Nombre: " + bluetoothDevice.getName()
                     + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
-            + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
+                    + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
 
         } else {
             String logfiltro = filtro.getText().toString() + " || " + bluetoothDevice.getName();
             Log.d("-------", logfiltro);
-            if(bluetoothDevice.getName() != null){
-                if(bluetoothDevice.getName().equals(filtro.getText().toString())){// - DISPOSITIVO ENCONTRADO
+            if (bluetoothDevice.getName() != null) {
+                if (bluetoothDevice.getName().equals(filtro.getText().toString())) {// - DISPOSITIVO ENCONTRADO
                     beaconslist.setText(beaconslist.getText() + System.getProperty("line.separator")
                             + "-----------" + System.getProperty("line.separator")
-                            + "Nombre: " +  bluetoothDevice.getName()
+                            + "Nombre: " + bluetoothDevice.getName()
                             + "  |  uuid:" + Utilidades.bytesToString(tib.getUUID())
                             + " | Major: " + Utilidades.bytesToInt(tib.getMajor())
                             + " | Minor: " + Utilidades.bytesToInt(tib.getMinor()));
                     Log.d(ETIQUETA_LOG, "¡DISPOSITIVO ENCONTRADO!");
-                    Toast.makeText(getApplicationContext(), "¡He encontrado el dispositivo filtrado: " + bluetoothDevice.getName(), Toast.LENGTH_SHORT ).show();
+                    Toast.makeText(getApplicationContext(), "¡He encontrado el dispositivo filtrado: " + bluetoothDevice.getName(), Toast.LENGTH_SHORT).show();
+                    if (primeraVezMostrado) {
+
+                        detenerBusquedaDispositivosBTLE();
+                        ShowPopup();
+                        primeraVezMostrado = false;
+                    }
 
 
-                    detenerBusquedaDispositivosBTLE();
-
-                    dispositivoUsuario = new Nodo(rssi, Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), bluetoothDevice.getName(),Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
-
-                    ShowPopup();
-
-                    Log.d("SENSOR", "Dispositivo a almacenar: "+ " -- "+ dispositivoUsuario.toMap().toString());
-
-
+                    Log.d("SENSOR", "Dispositivo a almacenar: " + " -- " + dispositivoUsuario.toMap().toString());
 
 
                     return;
@@ -176,7 +178,7 @@ public class BTLEActivity extends AppCompatActivity {
 
                     beaconslist.setText("No se ha encontrado ningún beacon con el valor prefijo del filtro <<" + filtro.getText() + " Valores detectados: " + bluetoothDevice.getName() + " || >> - Último beacon encontrado:" + System.getProperty("line.separator")
                             + "-----------" + System.getProperty("line.separator")
-                            + "Nombre: " +  bluetoothDevice.getName()
+                            + "Nombre: " + bluetoothDevice.getName()
                             + "  |  uuid: " + Utilidades.bytesToString(tib.getUUID())
                             + " | Major: " + Utilidades.bytesToInt(tib.getMajor()));
                 }
@@ -208,30 +210,38 @@ public class BTLEActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
-    private void buscarEsteDispositivoBTLE(final String dispositivoBuscado ) {
+    private void buscarEsteDispositivoBTLE() {
+
         Log.d(ETIQUETA_LOG, " buscarEsteDispositivoBTLE(): empieza ");
 
         Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): instalamos scan callback ");
+        EditText filtro = findViewById(R.id.filtroBeacon);
+        String dispositivoBuscado = String.valueOf(filtro.getText());
+        if (dispositivoBuscado.length() == 0) {
+            buscarTodosLosDispositivosBTLE();
 
+            return;
+        }
 
         // super.onScanResult(ScanSettings.SCAN_MODE_LOW_LATENCY, result); para ahorro de energÃ­a
 
         this.callbackDelEscaneo = new ScanCallback() {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
-            public void onScanResult( int callbackType, ScanResult resultado ) {
+            public void onScanResult(int callbackType, ScanResult resultado) {
                 super.onScanResult(callbackType, resultado);
                 Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): onScanResult() ");
-                mostrarInformacionDispositivoBTLE(resultado);
+
                 byte[] bytes = resultado.getScanRecord().getBytes();
 
                 TramaIBeacon tib = new TramaIBeacon(bytes);
-
-                if (Utilidades.bytesToString(tib.getUUID()).equals("EPSG-GTI-PROY-3A")){
-
+                Log.d("Tratando de enlazar arduino", Utilidades.bytesToString(tib.getUUID()));
+                if (Utilidades.bytesToString(tib.getUUID()).equals(filtro.getText())) {
+                //if (Utilidades.bytesToString(tib.getUUID()).equals("EPSG-GTI-PROY-3A")) {
+                    dispositivoUsuario = new Nodo(resultado.getRssi(), Utilidades.bytesToInt(tib.getMajor()), Utilidades.bytesToInt(tib.getMinor()), resultado.getDevice().getName(), Utilidades.bytesToString(tib.getUUID()), tib.getTxPower());
                     //Creamos un objeto calendar que guardara la fecha
 
-                   Date date = Date.newBuilder().build();
+                    Date date = Date.newBuilder().build();
                     // Instanciamos las variables que usaremos para recopilar los datos
                     float valorCO;
                     float valorCO2;
@@ -245,29 +255,33 @@ public class BTLEActivity extends AppCompatActivity {
                     // Deconstruimos el major
                     texto = Integer.toString(Utilidades.bytesToInt(tib.getMajor()));
 
-                    valorCO = recogerDatos(texto,1);
-                    Log.e("Test", "ValorCO " + valorCO);
-                    valorCO2 = recogerDatos(texto,2);
-                    Log.e("Test", "ValorCO2 " + valorCO2);
+                    valorCO = recogerDatos(texto, 1);
+                    Log.e(TAG, "ValorCO " + valorCO);
+                    valorCO2 = recogerDatos(texto, 2);
+                    Log.e(TAG, "ValorCO2 " + valorCO2);
 
                     // Deconstruimos el minor
                     texto = Integer.toString(Utilidades.bytesToInt(tib.getMinor()));
 
-                    valorO3 = recogerDatos(texto,1);
-                    Log.e("Test", "ValorO3 " + valorO3);
-                    valorTemperatura = recogerDatos(texto,2);
-                    Log.e("Test", "ValorTemperatura " + valorTemperatura);
+                    valorO3 = recogerDatos(texto, 1);
+                    Log.e(TAG, "ValorO3 " + valorO3);
+                    valorTemperatura = recogerDatos(texto, 2);
+                    Log.e(TAG, "ValorTemperatura " + valorTemperatura);
 
                     Medida medicionCO2 = new Medida(date, String.valueOf(valorCO2), MainActivity.getLatitud(), MainActivity.getLongitud(), "co2", UUID.randomUUID().toString());
-                    Medida medicionCO = new Medida(date,  String.valueOf(valorCO), MainActivity.getLatitud(), MainActivity.getLongitud(), "co", UUID.randomUUID().toString());
-                    Medida medicionO3 = new Medida(date,  String.valueOf(valorO3), MainActivity.getLatitud(), MainActivity.getLongitud(), "o3", UUID.randomUUID().toString());
-                    Medida medicionTemperatura = new Medida(date,  String.valueOf(valorTemperatura), MainActivity.getLatitud(), MainActivity.getLongitud(), "temperatura", UUID.randomUUID().toString());
+                    Medida medicionCO = new Medida(date, String.valueOf(valorCO), MainActivity.getLatitud(), MainActivity.getLongitud(), "co", UUID.randomUUID().toString());
+                    Medida medicionO3 = new Medida(date, String.valueOf(valorO3), MainActivity.getLatitud(), MainActivity.getLongitud(), "o3", UUID.randomUUID().toString());
+                    Medida medicionTemperatura = new Medida(date, String.valueOf(valorTemperatura), MainActivity.getLatitud(), MainActivity.getLongitud(), "temperatura", UUID.randomUUID().toString());
 
+                    medidasParaSubir.add(medicionCO2);
 
-
-
-                    SystemClock.sleep(2500); //ms
+                    medidasParaSubir.add(medicionCO);
+                    medidasParaSubir.add(medicionO3);
+                    medidasParaSubir.add(medicionTemperatura);
+                    Log.d("COLA", medidasParaSubir.get(0).getTipo().toString());
+                    //ms
                 }
+                mostrarInformacionDispositivoBTLE(resultado);
             }
 
             @Override
@@ -286,7 +300,7 @@ public class BTLEActivity extends AppCompatActivity {
         };
 
         List<ScanFilter> filters = new ArrayList<>();
-        ScanFilter sf = new ScanFilter.Builder().setDeviceName( dispositivoBuscado ).build();
+        ScanFilter sf = new ScanFilter.Builder().setDeviceName(dispositivoBuscado).build();
         filters.add(sf);
 
 
@@ -294,15 +308,19 @@ public class BTLEActivity extends AppCompatActivity {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
                 .build();
 
-        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado );
+        Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado);
         //Log.d(ETIQUETA_LOG, "  buscarEsteDispositivoBTLE(): empezamos a escanear buscando: " + dispositivoBuscado
         //      + " -> " + Utilidades.stringToUUID( dispositivoBuscado ) );
 
-        this.elEscanner.startScan(filters,settings,this.callbackDelEscaneo);
+        this.elEscanner.startScan(filters, settings, this.callbackDelEscaneo);
     } // ()
 
 
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        this.finish();
+    }
 
     public void ShowPopup() {
 
@@ -318,7 +336,7 @@ public class BTLEActivity extends AppCompatActivity {
         txtminor.setText(String.valueOf(dispositivoUsuario.getMinor()));
         txtnoise.setText(String.valueOf(dispositivoUsuario.getNoise()));
         txtname.setText(dispositivoUsuario.getBeaconName());
-        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
         txtclose.setText("M");
 
         txtclose.setOnClickListener(new View.OnClickListener() {
@@ -331,6 +349,7 @@ public class BTLEActivity extends AppCompatActivity {
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.show();
     }
+
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private void detenerBusquedaDispositivosBTLE() {
@@ -358,7 +377,7 @@ public class BTLEActivity extends AppCompatActivity {
         //this.buscarEsteDispositivoBTLE( Utilidades.stringToUUID( "EPSG-GTI-PROY-3A" ) );
 
         //this.buscarEsteDispositivoBTLE( "EPSG-GTI-PROY-3A" );
-        this.buscarEsteDispositivoBTLE("Demo beacon");
+        this.buscarEsteDispositivoBTLE();
 
     } // ()
 
@@ -368,10 +387,12 @@ public class BTLEActivity extends AppCompatActivity {
         Log.d(ETIQUETA_LOG, " boton detener busqueda dispositivos BTLE Pulsado");
         this.detenerBusquedaDispositivosBTLE();
     } // ()
+
     public void borrarTextViewBusqueda(View v) {
         TextView a = findViewById(R.id.beacons);
         a.setText("Búsqueda borrada...");
     } // ()
+
     // --------------------------------------------------------------
     // --------------------------------------------------------------
     private void inicializarBlueTooth() {
@@ -422,12 +443,12 @@ public class BTLEActivity extends AppCompatActivity {
         setContentView(R.layout.activity_btle);
         myDialog = new Dialog(this);
         FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
-        if(usuario != null) {
-             usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail());
-             logica = new FirebaseLogicaNegocio();
+        if (usuario != null) {
+            usuarioLogged = new LoggedInUser(usuario.getUid(), usuario.getDisplayName(), usuario.getEmail());
+            logica = new FirebaseLogicaNegocio();
 
         } else {
-            Toast.makeText(getApplicationContext(), "¡Ha habido un problema con tu sesión! Puede que no funcione bien el vínculo de dispositivos", Toast.LENGTH_SHORT ).show();
+            Toast.makeText(getApplicationContext(), "¡Ha habido un problema con tu sesión! Puede que no funcione bien el vínculo de dispositivos", Toast.LENGTH_SHORT).show();
         }
 
         Log.d(ETIQUETA_LOG, " onCreate(): empieza ");
@@ -436,7 +457,33 @@ public class BTLEActivity extends AppCompatActivity {
 
         Log.d(ETIQUETA_LOG, " onCreate(): termina ");
 
+
+        ejecutarTareaGuardarMediciones();
     } // onCreate()
+
+    public void ejecutarTareaGuardarMediciones() {
+
+        handler.postDelayed(new Runnable() {
+            public void run() {
+
+                if (medidasParaSubir.size() > 0) {
+
+                    Medida medicion = medidasParaSubir.get(0);
+                    Log.d("COLA-thread", medidasParaSubir.get(0).getTipo().toString());
+                    medidasParaSubir.remove(0);
+                    Log.d("COLA-thread-medicion", medicion.getTipo().toString());
+                    logica.guardarMediciones(medicion, usuarioLogged, dispositivoUsuario);
+
+                }
+
+
+                handler.postDelayed(this, TIEMPO);
+
+            }
+
+        }, TIEMPO);
+
+    }
 
     // --------------------------------------------------------------
     // --------------------------------------------------------------
@@ -471,10 +518,10 @@ public class BTLEActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void btnLink(View view) {
-        logica.enlazarDispositivo(dispositivoUsuario,usuarioLogged);
+        logica.enlazarDispositivo(dispositivoUsuario, usuarioLogged);
         Toast.makeText(getApplicationContext(),
-                "Acabas de añadir a la lista de sensores: "+ dispositivoUsuario.getBeaconName() + ". Por tanto... ¡Dispositivo enlazado correctamente!",
-                Toast.LENGTH_LONG ).show();
+                "Acabas de añadir a la lista de sensores: " + dispositivoUsuario.getBeaconName() + ". Por tanto... ¡Dispositivo enlazado correctamente!",
+                Toast.LENGTH_LONG).show();
     }
 
     private int recogerDatos(String datos, int tipo) {

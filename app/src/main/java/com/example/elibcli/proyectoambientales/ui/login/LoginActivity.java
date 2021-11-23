@@ -1,7 +1,6 @@
 package com.example.elibcli.proyectoambientales.ui.login;
 
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -13,26 +12,24 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.elibcli.proyectoambientales.MainActivity;
 import com.example.elibcli.proyectoambientales.R;
-import com.example.elibcli.proyectoambientales.data.model.FirebaseLogicaNegocio;
 import com.example.elibcli.proyectoambientales.data.model.LoggedInUser;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.EmailAuthProvider;
-import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthSettings;
 import com.google.firebase.auth.FirebaseUser;
@@ -45,8 +42,7 @@ import com.google.firebase.auth.PlayGamesAuthProvider;
 import com.google.firebase.auth.SignInMethodQueryResult;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -54,7 +50,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -153,7 +148,14 @@ public class LoginActivity extends AppCompatActivity {
                     // The user is new, show them a fancy intro screen!
 
                     Toast.makeText(this, "¡Bienvenido! " + user.getDisplayName(), Toast.LENGTH_LONG).show();
-                    usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber(), user.getPhotoUrl().toString());
+                    if(user.getPhotoUrl() != null){
+                        usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber(), user.getPhotoUrl().toString());
+
+                    }else {
+
+                        usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber());
+                    }
+
 
                     HashMap<String, Object> docData = new HashMap<>();
 
@@ -163,31 +165,64 @@ public class LoginActivity extends AppCompatActivity {
                     docData.put("foto", usuario.getUrlFoto());//Reemplazar por el numero real cuando se implemente la edicion del perfil
                     docData.put("coins", "0"); //Reemplazar por valores reales cuando se realice la implementacion de las monedas
 
-                    FirebaseDatabase mDatabase = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase);
+
+
+                    FirebaseFirestore nDatabase = FirebaseFirestore.getInstance();
+
+
                     //Telemetria
                     HashMap<String, Object> docDataTelemetria = new HashMap<>();
                     Date lastLoggin = new Date(user.getMetadata().getLastSignInTimestamp());
-
                     SimpleDateFormat sfd = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss"); //Convertimos el ultimo inicio de sesion a un formato de fecha legible
                     sfd.format(lastLoggin);
-
-
-
                     docDataTelemetria.put("sesionActual", lastLoggin);
                     docDataTelemetria.put("primeraSesion", lastLoggin);
-
-                    mDatabase.getReference().child("usuarios/" + usuario.getUserId()).setValue(docData);
                     Log.d("LOGGIN", "Registrando hora... " + lastLoggin);
-                    mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/telemetria/" + lastLoggin).setValue(docDataTelemetria);
+                    //Datos de usuario - NEW LOGIN - Firestore
+                    nDatabase.collection("usuarios").document(usuario.getUserId())
+                            .set(docData)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Log.d(TAG, "Nuevo usuario registrado");
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.w(TAG, "ERROR en: Nuevo usuario registrado", e);
+                                }
+                            });
+                    //Telemetria docMap - NEW LOGIN - Firestore
+                    nDatabase.collection("usuarios").document(usuario.getUserId()).collection("telemetria").document(lastLoggin.toString())
+                            .set(docDataTelemetria)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Log.d(TAG, "Telemetria registrada a nuevo usuario");
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.w(TAG, "ERROR en: Telemetria registrada a nuevo usuario", e);
+                                }
+                            });
+
                 } else {
                     // This is an existing user, show them a welcome back screen.
                     Toast.makeText(this, "Bienvenido de nuevo, " + user.getDisplayName(), Toast.LENGTH_LONG).show();
 
-                    usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber(), user.getPhotoUrl().toString());
+                    if(user.getPhotoUrl() != null){
+                        usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber(), user.getPhotoUrl().toString());
+
+                    }else {
+
+                        usuario = new LoggedInUser(user.getUid(), user.getDisplayName(), user.getEmail(), user.getPhoneNumber());
+                    }
+
 
                     HashMap<String, Object> docData = new HashMap<>();
-
-                    FirebaseDatabase mDatabase = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase);
                     //Telemetria
                     HashMap<String, Object> docDataTelemetria = new HashMap<>();
 
@@ -203,7 +238,23 @@ public class LoginActivity extends AppCompatActivity {
 
 
                     Log.d("LOGGIN", "Registrando hora... " + lastLoggin);
-                    mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/telemetria/" + lastLoggin).setValue(docDataTelemetria);
+
+                    FirebaseFirestore nDatabase = FirebaseFirestore.getInstance();
+                    //Telemetria docMap - USUARIO ANTIGUO - Firestore
+                    nDatabase.collection("usuarios").document(usuario.getUserId()).collection("telemetria").document(lastLoggin.toString())
+                            .set(docDataTelemetria)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Log.d(TAG, "Telemetria registrada a antiguo usuario");
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.w(TAG, "ERROR en: Telemetria registrada a antiguo usuario", e);
+                                }
+                            });
                 }
                 startActivity(new Intent(this, MainActivity.class));
 

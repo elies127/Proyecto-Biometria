@@ -44,6 +44,8 @@ public class SegundoPlanoLecturaSensor extends Service {
     private String tituloNoti = "";
     FirebaseLogicaNegocio logica;
     private DatabaseReference database;
+    private HandlerThread handlerThread;
+    private Handler handler;
     private HashMap<String, Medida> medidas;
     @RequiresApi(api = Build.VERSION_CODES.O)
     private String textoNoti;
@@ -71,77 +73,74 @@ public class SegundoPlanoLecturaSensor extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Runnable lecturaDatos() throws InterruptedException {
 
-        HandlerThread handlerThread = new HandlerThread("MyHandlerThread");
+         handlerThread = new HandlerThread("MyHandlerThread");
         handlerThread.start();
         Looper looper = handlerThread.getLooper();
-        Handler handler = new Handler(looper);
-        handler.post(new Runnable(){
+         handler = new Handler(looper);
+        handler.post(() -> {
+            Medida medida;
+            textoNoti = "Descargando datos...";
+            tituloNoti = "Buscando nodos...";
 
-
-            @Override
-            public void run() {
-                Medida medida;
-                textoNoti = "Descargando datos...";
-                tituloNoti = "Buscando nodos...";
-
-               /* try {
-                    handlerThread.getLooper().wait(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                */
-                database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
-
-                database.limitToLast(1).orderByKey().addChildEventListener(new ChildEventListener() {
-                                              @Override
-                                              public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
-                                                  try {
-                                                      handler.postDelayed(lecturaDatos(), 10000);
-
-                                                  } catch (InterruptedException e) {
-                                                      Log.d("NOTIFICACIONES", "Error en el thread secundario" + e);
-                                                  }
-                                                  HashMap<String, Medida> listaMedidas = new HashMap<>();
-                                                  Log.d("NOTIFICACIONES", "Key: " + dataSnapshot.getKey() + " Nodo obtenido: " + dataSnapshot.getValue(Nodo.class).getMedidas().toString());
-                                                  Nodo nodo = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
-                                                  Log.d("NOTIFICACIONES", "Medida obtenida " + nodo.getMedidas());
-                                                  listaMedidas = nodo.getMedidas();
-
-                                                  Log.d("NOTIFICACIONES", "Mediciones de listaMedidas.toString() - " + listaMedidas.toString());
-                                                  textoNoti = "Hay un total de "+ listaMedidas.size() + " mediciones.";
-                                                  tituloNoti = "Nodo: "+ nodo.getBeaconName() + " conectado";
-                                                  actualizarNotificacion(textoNoti,tituloNoti);
-
-
-                                              }
-
-                    @Override
-                    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-                    }
-
-                    @Override
-                    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
-                    }
-
-                    @Override
-                    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-
-                });
-
-
-
-
-
+           /* try {
+                handlerThread.getLooper().wait(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            */
+            database = FirebaseDatabase.getInstance(FirebaseLogicaNegocio.urlDatabase).getReference().child("usuarios/" + usuarioLogged.getUserId() + "/nodos/");
+
+            database.limitToLast(1).orderByKey().addChildEventListener(new ChildEventListener() {
+                                          @Override
+                                          public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+
+                                              HashMap<String, Medida> listaMedidas = new HashMap<>();
+                                              Log.d("NOTIFICACIONES", "Key: " + dataSnapshot.getKey() + " Nodo obtenido: " + dataSnapshot.getValue(Nodo.class).getMedidas().toString());
+                                              Nodo nodo = dataSnapshot.getValue(Nodo.class); //adaptamos el resultado de Firebase al nuestro
+                                              Log.d("NOTIFICACIONES", "Medida obtenida " + nodo.getMedidas());
+                                              listaMedidas = nodo.getMedidas();
+
+                                              Log.d("NOTIFICACIONES", "Mediciones de listaMedidas.toString() - " + listaMedidas.toString());
+                                              textoNoti = "Hay un total de "+ listaMedidas.size() + " mediciones.";
+                                              tituloNoti = "Nodo: "+ nodo.getBeaconName() + " conectado";
+                                              actualizarNotificacion(textoNoti,tituloNoti);
+
+
+                                          }
+
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                }
+
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+
+
+            });
+
+/*
+            try {
+                handler.postDelayed(lecturaDatos(), 1000);
+
+            } catch (InterruptedException e) {
+                Log.d("NOTIFICACIONES", "Error en el thread secundario" + e);
+            }
+
+
+*/      Looper.loop();
         });
 
 /*
@@ -217,6 +216,8 @@ public class SegundoPlanoLecturaSensor extends Service {
                 Log.d("LecturaDatos", "---------------------");
                 e.printStackTrace();
             }
+
+
             //do heavy work on a background thread
 
         } else { //Se ha cerrado la sesion!! Notificamos al usurio

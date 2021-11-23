@@ -31,7 +31,7 @@
         android:id="@+id/botonBuscarDispositivosBTLE"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="botonBuscarDispositivosBTLEPulsado"
+        android:onClick="botonBuscarNuestroDispositivoBTLEPulsado"
         android:text="Buscar dispositivos"
         app:icon="@android:drawable/ic_popup_sync"
         app:layout_constraintTop_toTopOf="parent" />

@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import com.example.elibcli.proyectoambientales.ui.gallery.MyAdapter;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -33,7 +35,9 @@ public class FirebaseLogicaNegocio {
     DatabaseReference database;
     ArrayList<Nodo> lista;
     private FirebaseDatabase mDatabase; //Real time database - Menor cantidad de datos a tiempo real.
-    private FirebaseFirestore db = FirebaseFirestore.getInstance(); //Firestore database - Más lenta, mayor cantidad de datos
+
+    private FirebaseFirestore nDatabase = FirebaseFirestore.getInstance(); //Firestore database - Más lenta, mayor cantidad de datos y mejores queries
+
     private String TAG = "LOGICA";
     /*
      Diseño lógico:
@@ -50,7 +54,25 @@ public class FirebaseLogicaNegocio {
         mDatabase = FirebaseDatabase.getInstance(urlDatabase);
         Log.d("SENSOR", "Intentando guardar dispositivo en Firebase... -> " + nodo.toMap().toString());
         mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/nodos/" + nodo.getUuid()).setValue(nodo.toMap());
+
+        nDatabase.collection("usuarios").document(usuario.getUserId()).collection("nodos").document(nodo.getUuid())
+                .set(docData)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(TAG, "Nuevo nodo enlazado");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "ERROR en: Nuevo nodo enlazado", e);
+                    }
+                });
+
     }
+
+
     /*
      Diseño lógico:
         [Sensor],[usuario] -> eliminarDispositivos()
@@ -59,15 +81,25 @@ public class FirebaseLogicaNegocio {
 
      */
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void desenlazarDispositivos(Nodo sensor, LoggedInUser usuario) {
-        String child = "usuarios/" + usuario.getUserId() + "/nodos/" + sensor.getUuid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-        Query applesQuery = ref.child("usuarios/" + usuario.getUserId() + "/nodos/" + sensor.getUuid()).orderByChild(sensor.getUuid()).equalTo(sensor.getUuid());
-        Log.d("SENSOR", "Intentando ELIMINAR dispositivo en Firebase... -> " + sensor.toMap().toString());
-        ref = FirebaseDatabase.getInstance().getReference()
-                .child(child);
-        ref.removeValue();
-        Log.d("SENSOR", "Sensor eliminado de Firebase -> " + sensor.toMap().toString());
+    public void desenlazarDispositivos(Nodo nodo, LoggedInUser usuario) {
+
+
+        nDatabase.collection("usuarios").document(usuario.getUserId()).collection("nodos").document(nodo.getUuid())
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(TAG, "Nodo borrado");
+                        Log.d(TAG, "NODO eliminado de Firebase -> " + nodo.toMap().toString());
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "ERROR en: Nodo borrado", e);
+                    }
+                });
+
 
     }
 
@@ -94,6 +126,21 @@ public class FirebaseLogicaNegocio {
         mDatabase = FirebaseDatabase.getInstance(urlDatabase);
 
         mDatabase.getReference().child("usuarios/" + usuario.getUserId() + "/nodos/" + nodo.getUuid() + "/medidas/" + new Date()).setValue(docData);
+
+        nDatabase.collection("usuarios").document(usuario.getUserId()).collection("nodos").document(nodo.getUuid()).collection("medidas").document(new Date().toString())
+                .set(docData)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(TAG, "Nueva medida guardada");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "ERROR en: Nueva medida guardada", e);
+                    }
+                });
 
 
     }

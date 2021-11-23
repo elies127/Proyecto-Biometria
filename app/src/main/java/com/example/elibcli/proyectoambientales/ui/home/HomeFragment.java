@@ -32,7 +32,7 @@ public class HomeFragment extends Fragment {
     private HomeViewModel homeViewModel;
     private static final String ETIQUETA_LOG = "DATOS ----";
     private SuperActivityToast superActivityToast;
-    private Intent elIntentDelServicio = null;
+    private Intent serviceIntent = null;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -73,7 +73,7 @@ public class HomeFragment extends Fragment {
     public void botonArrancarServicioPulsado() {
         Log.d(ETIQUETA_LOG, " boton arrancar servicio Pulsado");
 
-        if (this.elIntentDelServicio != null) {
+        if (this.serviceIntent != null) {
             // ya estaba arrancado
             return;
         }
@@ -95,14 +95,14 @@ public class HomeFragment extends Fragment {
     // ---------------------------------------------------------------------------------------------
     public void botonDetenerServicioPulsado() {
 
-        if (this.elIntentDelServicio == null) {
+        if (this.serviceIntent == null) {
             // no estaba arrancado
             return;
         }
 
-        getActivity().stopService(this.elIntentDelServicio);
+        getActivity().stopService(this.serviceIntent);
 
-        this.elIntentDelServicio = null;
+        this.serviceIntent = null;
 
         Log.d(ETIQUETA_LOG, " boton detener servicio Pulsado");
         superActivityToast.setProgress(10);
@@ -114,6 +114,7 @@ public class HomeFragment extends Fragment {
         serviceIntent.putExtra("inputExtra", "¡Gracias por ayudar a combatir el cambio climático!");
         ContextCompat.startForegroundService(getContext(), serviceIntent);
     }
+
     // ---------------------------------------------------------------------------------------------
     // ---
 }
